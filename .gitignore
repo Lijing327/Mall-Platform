@@ -6,6 +6,12 @@
 target/
 **/target/
 
+# Frontend dependencies/build cache
+node_modules/
+**/node_modules/
+.vite/
+**/.vite/
+
 # OS
 .DS_Store
 Thumbs.db
