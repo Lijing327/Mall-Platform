@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    # 正式库连接（服务器）
+    url: ${DB_PROD_URL:jdbc:sqlserver://127.0.0.1:1433;databaseName=mall_platform_prod;encrypt=true;trustServerCertificate=true}
+    username: ${DB_PROD_USERNAME:sa}
+    password: ${DB_PROD_PASSWORD:change_me}
+
+mybatis-plus:
+  configuration:
+    # 正式环境建议关闭 SQL 控制台日志
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
