@@ -28,7 +28,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { fetchCartList } from "../api/cart";
-import { getUserId } from "../utils/user-context";
 
 const list = ref([]);
 
@@ -44,7 +43,7 @@ const totalAmount = computed(() => {
 });
 
 async function loadData() {
-  const res = await fetchCartList(getUserId());
+  const res = await fetchCartList();
   list.value = res.data || [];
 }
 

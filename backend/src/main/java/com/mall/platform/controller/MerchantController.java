@@ -1,5 +1,6 @@
 package com.mall.platform.controller;
 
+import com.mall.platform.auth.AuthBinding;
 import com.mall.platform.common.Result;
 import com.mall.platform.dto.MerchantApplyDTO;
 import com.mall.platform.service.MerchantService;
@@ -25,6 +26,9 @@ public class MerchantController {
      */
     @PostMapping("/apply")
     public Result<MerchantApplyVO> apply(@Valid @RequestBody MerchantApplyDTO merchantApplyDTO) {
+        long uid = AuthBinding.currentUserIdOrThrow();
+        AuthBinding.assertSameUser(merchantApplyDTO.getUserId(), uid);
+        merchantApplyDTO.setUserId(uid);
         return Result.success(merchantService.apply(merchantApplyDTO));
     }
 }

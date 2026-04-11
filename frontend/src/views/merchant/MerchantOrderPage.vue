@@ -8,6 +8,8 @@
           <th>订单号</th>
           <th>状态</th>
           <th>金额</th>
+          <th>快递单号</th>
+          <th>发货时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -17,6 +19,8 @@
           <td>{{ item.orderNo }}</td>
           <td>{{ item.orderStatus }}</td>
           <td>{{ item.payAmount }}</td>
+          <td>{{ item.shippingNo || "-" }}</td>
+          <td>{{ item.shipTime || "-" }}</td>
           <td class="ops">
             <a href="javascript:void(0)" @click="viewDetail(item.orderId)">详情</a>
             <a
@@ -36,6 +40,12 @@
       <p>状态：{{ detail.orderStatus }}</p>
       <p>收货信息：{{ detail.receiverName || "-" }} {{ detail.receiverMobile || "-" }}</p>
       <p>地址：{{ detail.receiverAddress || "-" }}</p>
+      <p v-if="detail.remark"><span class="muted">用户备注</span> {{ detail.remark }}</p>
+      <template v-if="detail.shippingNo || detail.shipTime">
+        <p><span class="muted">快递单号</span> {{ detail.shippingNo || "-" }}</p>
+        <p v-if="detail.shippingRemark"><span class="muted">发货备注</span> {{ detail.shippingRemark }}</p>
+        <p><span class="muted">发货时间</span> {{ detail.shipTime || "-" }}</p>
+      </template>
       <table class="table">
         <thead>
           <tr>
@@ -61,20 +71,19 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { fetchMerchantOrderDetail, fetchMerchantOrders, shipMerchantOrder } from "../../api/merchant";
-import { getMerchantId, getUserId } from "../../utils/user-context";
+import { getMerchantId } from "../../utils/user-context";
 
-const userId = getUserId();
 const merchantId = getMerchantId();
 const list = ref([]);
 const detail = ref(null);
 
 async function loadData() {
-  const res = await fetchMerchantOrders({ userId, merchantId, pageNum: 1, pageSize: 100 });
+  const res = await fetchMerchantOrders({ merchantId, pageNum: 1, pageSize: 100 });
   list.value = res.data.list || [];
 }
 
 async function viewDetail(orderId) {
-  const res = await fetchMerchantOrderDetail(orderId, { userId, merchantId });
+  const res = await fetchMerchantOrderDetail(orderId, { merchantId });
   detail.value = res.data;
 }
 
@@ -82,7 +91,7 @@ async function shipOrder(orderId) {
   const shippingNo = window.prompt("请输入快递单号");
   if (!shippingNo) return;
   const shippingRemark = window.prompt("请输入发货备注（可为空）") || "";
-  await shipMerchantOrder(orderId, { userId, merchantId, shippingNo, shippingRemark });
+  await shipMerchantOrder(orderId, { merchantId, shippingNo, shippingRemark });
   window.alert("发货成功");
   await loadData();
   await viewDetail(orderId);
@@ -107,5 +116,9 @@ onMounted(loadData);
 }
 .detail {
   margin-top: 14px;
+}
+.muted {
+  color: #888;
+  margin-right: 6px;
 }
 </style>

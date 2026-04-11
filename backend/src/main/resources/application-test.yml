@@ -2,9 +2,20 @@ spring:
   datasource:
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     # 测试库连接（服务器）
-    url: ${DB_TEST_URL:jdbc:sqlserver://127.0.0.1:1433;databaseName=mall_platform_test;encrypt=true;trustServerCertificate=true}
-    username: ${DB_TEST_USERNAME:sa}
-    password: ${DB_TEST_PASSWORD:change_me}
+    # encrypt=false：仍可能因服务端「强制加密」或驱动预登录而走 TLS；若服务端只支持 TLS1.0，JDK17 默认会拒绝。
+    # 此时保持下方 mall.tls.legacy-sql-server=true（或设环境变量 MALL_TLS_LEGACY_SQL_SERVER=true），由启动早期处理器放宽客户端 TLS。
+    # 根治：在 SQL Server 主机启用 TLS1.2+；公网勿长期 trustServerCertificate=true。
+    url: ${DB_TEST_URL:jdbc:sqlserver://172.16.15.10;databaseName=mall_platform;encrypt=false;trustServerCertificate=true}
+    username: sa
+    password: Qc123456
+
+# 旧库仅 TLS1.0 时必填 true（默认开启测试 profile）；连接已升级 TLS1.2+ 的库时请改为 false。
+# 快速验证 JDK 是否允许 TLSv1：IDEA 运行配置 → VM options 增加：
+# -Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2
+# 若仍失败，再查 JDK 的 conf/security/java.security 中 jdk.tls.disabledAlgorithms 是否仍禁用 TLSv1、TLSv1.1。
+mall:
+  tls:
+    legacy-sql-server: ${MALL_TLS_LEGACY_SQL_SERVER:true}
 
 mybatis-plus:
   configuration:

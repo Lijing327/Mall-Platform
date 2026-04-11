@@ -1,12 +1,10 @@
 package com.mall.platform.dto;
 
-import jakarta.validation.constraints.NotNull;
-
 /**
  * 创建订单请求参数。
+ * userId 由服务端根据登录态写入，客户端可不传。
  */
 public class OrderCreateDTO {
-    @NotNull(message = "userId 不能为空")
     private Long userId;
 
     public Long getUserId() {

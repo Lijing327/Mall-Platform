@@ -11,6 +11,8 @@ import com.mall.platform.dto.MerchantProductUpdateDTO;
 import com.mall.platform.entity.MerchantEntity;
 import com.mall.platform.entity.ProductEntity;
 import com.mall.platform.entity.ShopEntity;
+import com.mall.platform.enums.MerchantApplyStatus;
+import com.mall.platform.enums.ProductSaleStatus;
 import com.mall.platform.repository.MerchantRepository;
 import com.mall.platform.repository.ProductRepository;
 import com.mall.platform.repository.ShopRepository;
@@ -80,6 +82,15 @@ public class MerchantProductService {
     }
 
     /**
+     * 商家商品详情（须为本店商品）。
+     */
+    public MerchantProductVO getMerchantProduct(Long productId, Long userId, Long merchantId) {
+        ShopEntity shopEntity = resolveMerchantShop(userId, merchantId);
+        ProductEntity entity = requireMerchantOwnProduct(productId, shopEntity.getId());
+        return toMerchantProductVO(entity, true);
+    }
+
+    /**
      * 商家新增商品（默认下架状态）。
      */
     @Transactional(rollbackFor = Exception.class)
@@ -94,11 +105,11 @@ public class MerchantProductService {
         entity.setDetail(createDTO.getDetail());
         entity.setPrice(createDTO.getPrice());
         entity.setStock(createDTO.getStock());
-        entity.setSaleStatus("OFF_SHELF");
+        entity.setSaleStatus(ProductSaleStatus.OFF_SHELF.getCode());
         entity.setAuditStatus("PASS");
         entity.setDeleted(Boolean.FALSE);
         productRepository.insert(entity);
-        return toMerchantProductVO(entity);
+        return toMerchantProductVO(entity, true);
     }
 
     /**
@@ -116,7 +127,7 @@ public class MerchantProductService {
         entity.setPrice(updateDTO.getPrice());
         entity.setStock(updateDTO.getStock());
         productRepository.updateById(entity);
-        return toMerchantProductVO(entity);
+        return toMerchantProductVO(entity, true);
     }
 
     /**
@@ -126,7 +137,7 @@ public class MerchantProductService {
     public void onShelf(Long productId, Long userId, Long merchantId) {
         ShopEntity shopEntity = resolveMerchantShop(userId, merchantId);
         ProductEntity entity = requireMerchantOwnProduct(productId, shopEntity.getId());
-        entity.setSaleStatus("ON_SHELF");
+        entity.setSaleStatus(ProductSaleStatus.ON_SHELF.getCode());
         productRepository.updateById(entity);
     }
 
@@ -137,7 +148,7 @@ public class MerchantProductService {
     public void offShelf(Long productId, Long userId, Long merchantId) {
         ShopEntity shopEntity = resolveMerchantShop(userId, merchantId);
         ProductEntity entity = requireMerchantOwnProduct(productId, shopEntity.getId());
-        entity.setSaleStatus("OFF_SHELF");
+        entity.setSaleStatus(ProductSaleStatus.OFF_SHELF.getCode());
         productRepository.updateById(entity);
     }
 
@@ -149,7 +160,7 @@ public class MerchantProductService {
         ShopEntity shopEntity = resolveMerchantShop(userId, merchantId);
         ProductEntity entity = requireMerchantOwnProduct(productId, shopEntity.getId());
         entity.setDeleted(Boolean.TRUE);
-        entity.setSaleStatus("OFF_SHELF");
+        entity.setSaleStatus(ProductSaleStatus.OFF_SHELF.getCode());
         productRepository.updateById(entity);
     }
 
@@ -166,7 +177,7 @@ public class MerchantProductService {
         if (merchantEntity == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "当前用户不是商家或商家不存在");
         }
-        if (!"APPROVED".equals(merchantEntity.getApplyStatus())) {
+        if (!MerchantApplyStatus.APPROVED.getCode().equals(merchantEntity.getApplyStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "商家审核未通过，不能操作商品");
         }
 
@@ -192,6 +203,10 @@ public class MerchantProductService {
     }
 
     private MerchantProductVO toMerchantProductVO(ProductEntity entity) {
+        return toMerchantProductVO(entity, false);
+    }
+
+    private MerchantProductVO toMerchantProductVO(ProductEntity entity, boolean includeDetail) {
         MerchantProductVO vo = new MerchantProductVO();
         vo.setId(entity.getId());
         vo.setShopId(entity.getShopId());
@@ -199,6 +214,9 @@ public class MerchantProductService {
         vo.setProductName(entity.getProductName());
         vo.setProductSubtitle(entity.getProductSubtitle());
         vo.setMainImage(entity.getMainImage());
+        if (includeDetail) {
+            vo.setDetail(entity.getDetail());
+        }
         vo.setPrice(entity.getPrice());
         vo.setStock(entity.getStock());
         vo.setSaleStatus(entity.getSaleStatus());

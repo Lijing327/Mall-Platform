@@ -2,16 +2,34 @@
 
 ## 1. 项目定位
 
-本项目当前阶段为 **MVP 后端基础骨架**，目标是先保证：
+本项目当前阶段为 **平台型商城 MVP（后端主流程已打通）**，目标是：
 
 - Spring Boot 项目可稳定启动
 - SQL Server 可按环境连接
 - 基础分层结构清晰可扩展
 - 统一返回与全局异常处理可复用
+- 用户端、商家端、管理员端核心接口可联调
 
-当前不包含具体商城业务逻辑（如商品、订单、购物车等）。
+## 2. 当前功能范围（阶段汇总）
 
-## 2. 技术栈与版本
+### 2.1 已完成能力
+
+- **阶段1**：后端基础骨架（Result、全局异常、多环境配置）
+- **阶段2**：数据库表结构设计（`user/merchant/shop/product/cart/orders/order_item`）
+- **阶段3**：用户商品查询（列表、详情、分页、关键字搜索）
+- **阶段4**：购物车 + 下单 + 模拟支付闭环
+- **阶段5**：商家入驻申请 + 管理员审核 + 自动开店
+- **阶段6**：商家商品管理（增删改查、上下架、归属校验）
+- **阶段7**：商家订单查看 + 发货
+- **阶段8**：管理员全局管理（商家/订单/商品）
+
+### 2.2 状态流转约定
+
+- 商家申请：`PENDING -> APPROVED / REJECTED`
+- 订单状态：`PENDING_PAYMENT -> PAID -> SHIPPED -> COMPLETED`（用户确认收货）
+- 商品状态：`OFF_SHELF <-> ON_SHELF`
+
+## 3. 技术栈与版本
 
 - JDK: 17
 - Spring Boot: 3.3.4
@@ -19,7 +37,17 @@
 - 数据库: SQL Server
 - ORM: MyBatis-Plus（快速落地，便于后续扩展）
 
-## 3. 目录结构说明
+## 4. 管理端 API 路径规范
+
+- 统一前缀：`/api/admin`
+- 资源名使用**复数**英文：`merchants`、`orders`、`products`
+- 列表：`GET /api/admin/{资源}`
+- 子动作（非 CRUD 动词）：`POST /api/admin/{资源}/{动作}`，例如商家审核为 `POST /api/admin/merchants/audit`
+- 单资源操作：`POST /api/admin/products/{id}/off-shelf` 等
+
+> 已移除旧路径 `GET /api/admin/merchant/list` 与 `POST /api/admin/merchant/audit`，请统一使用上述 `merchants` 路径。
+
+## 5. 目录结构说明
 
 `src/main/java/com/mall/platform`：
 
@@ -37,14 +65,14 @@
 - `application-test.yml`：测试环境数据库配置
 - `application-prod.yml`：正式环境数据库配置
 
-## 4. 环境配置说明
+## 6. 环境配置说明
 
-### 4.1 Profile 约定
+### 6.1 Profile 约定
 
 - 默认环境：`test`
 - 正式环境：`prod`
 
-### 4.2 JDK 版本统一（强制）
+### 6.2 JDK 版本统一（强制）
 
 - 项目强制要求：`JDK 17`
 - `pom.xml` 已启用 `maven-enforcer-plugin`，非 JDK 17 会直接构建失败
@@ -53,7 +81,7 @@
   2. IDEA Maven Runner JDK = 17
   3. 系统 `JAVA_HOME` = JDK 17
 
-### 4.3 环境变量
+### 6.3 环境变量
 
 测试环境：
 
@@ -69,9 +97,23 @@
 
 > 建议：不要把真实账号密码写入仓库文件，统一使用环境变量注入。
 
-## 5. 启动与验证
+### 6.4 数据库初始化（新环境一键建表 + 种子数据）
 
-## 5.1 启动命令
+仓库已提供 **SQL Server** 初始化脚本（与当前 `entity` 字段一致），路径：
+
+- `db/init/mall_platform_sqlserver_init.sql`（已含 `shop_order` 子订单表）
+- 已有库仅增量补表：`db/init/alter_add_shop_order.sql`
+- 使用说明：`db/init/README.md`
+
+**简要步骤**：
+
+1. 在 SQL Server 上创建数据库 `mall_platform_test`（或与 `application-test.yml` 中 `databaseName` 一致）。
+2. 以 SSMS 或 `sqlcmd` 执行上述 SQL 文件（执行前请阅读 `db/init/README.md` 中的身份与 `merchantId` 约定）。
+3. 配置好 `DB_TEST_*` 环境变量后启动后端，按下文「推荐联调顺序」验证。
+
+## 7. 启动与验证
+
+### 7.1 启动命令
 
 默认测试环境启动：
 
@@ -85,7 +127,7 @@ mvn spring-boot:run
 mvn spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
-### 5.2 验证接口
+### 7.2 验证接口
 
 健康检查：
 
@@ -97,7 +139,17 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 - `message = 成功`
 - `data.status = UP`
 
-## 6. 开发规范（当前阶段）
+### 7.3 推荐联调顺序
+
+1. `GET /api/health`（服务健康）
+2. 商品浏览：`GET /api/products`、`GET /api/products/{id}`
+3. 购物车：`POST /api/cart/add`、`GET /api/cart/list`
+4. 交易：`POST /api/orders/create`、`POST /api/orders/pay`
+5. 商家流程：`/api/merchant/apply` + `/api/admin/merchants/audit`
+6. 商家管理：`/api/merchant/products`、`/api/merchant/orders`
+7. 管理端：`GET /api/admin/merchants`、`POST /api/admin/merchants/audit`、`GET /api/admin/orders`、`GET /api/admin/products` 等（见 §4）
+
+## 8. 开发规范（当前阶段）
 
 - 代码注释统一使用中文
 - 新增功能遵循分层：`controller -> service -> repository`
@@ -105,9 +157,9 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 - 业务异常优先抛 `BizException`，统一由 `GlobalExceptionHandler` 处理
 - 不在当前阶段引入复杂鉴权、消息队列、搜索引擎等非 MVP 必需能力
 
-## 7. 常见问题与排查
+## 9. 常见问题与排查
 
-### 7.1 构建报错：`ExceptionInInitializerError` / `TypeTag::UNKNOWN`
+### 9.1 构建报错：`ExceptionInInitializerError` / `TypeTag::UNKNOWN`
 
 **现象**：
 
@@ -129,7 +181,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 
 ---
 
-### 7.4 构建报错：`Detected JDK version ... is not in the allowed range [17,18)`
+### 9.2 构建报错：`Detected JDK version ... is not in the allowed range [17,18)`
 
 **现象**：
 
@@ -148,7 +200,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 
 ---
 
-### 7.2 启动失败：数据库连接异常
+### 9.3 启动失败：数据库连接异常
 
 **现象**：
 
@@ -166,7 +218,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 
 ---
 
-### 7.3 Mapper 扫描不到
+### 9.4 Mapper 扫描不到
 
 **现象**：
 
@@ -178,17 +230,31 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 2. 确认 Mapper 接口在 `repository` 包下
 3. 确认 Mapper 接口继承 `BaseMapper<实体>`
 
-## 8. 日常问题处理建议
+### 9.5 前端报错导致联调中断（协同问题）
+
+**现象**：
+
+- 后端接口正常，但前端页面白屏或 Vite Overlay 报错
+
+**排查清单**：
+
+1. 先看 `frontend` 控制台报错是否为模板语法错误（如缺失结束标签）
+2. 检查路由页面是否正确导入/导出
+3. 确认前端代理配置是否指向 `http://localhost:8080`
+4. 若后端接口变更，及时同步前端 API 封装
+
+## 10. 日常问题处理建议
 
 - 先看启动日志的第一条根因（Root Cause），不要只看最外层报错
 - 先排环境（JDK、Profile、数据库连通）再排代码
 - 每次改动后先验证健康检查接口，确保基础链路不被破坏
 - 发现通用问题及时补充本手册，沉淀为团队知识库
 
-## 9. 后续迭代建议
+## 11. 后续迭代建议
 
 下一阶段建议新增：
 
-- 数据库初始化脚本目录规范（`db/migration`）
 - 统一 API 文档（接口清单 + 示例请求响应）
 - 日志规范（请求日志、异常日志、链路追踪字段）
+
+> 数据库初始化脚本已落地于仓库 `db/init/`，详见第 **6.4** 节与 `db/init/README.md`。

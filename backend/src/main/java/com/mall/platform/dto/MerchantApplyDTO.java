@@ -1,13 +1,12 @@
 package com.mall.platform.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * 商家入驻申请参数。
+ * userId 由服务端根据登录态写入，客户端可不传。
  */
 public class MerchantApplyDTO {
-    @NotNull(message = "userId 不能为空")
     private Long userId;
 
     @NotBlank(message = "merchantName 不能为空")

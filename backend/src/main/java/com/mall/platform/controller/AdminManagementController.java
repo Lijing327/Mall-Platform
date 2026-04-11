@@ -4,16 +4,21 @@ import com.mall.platform.common.Result;
 import com.mall.platform.dto.AdminMerchantQueryDTO;
 import com.mall.platform.dto.AdminOrderQueryDTO;
 import com.mall.platform.dto.AdminProductQueryDTO;
+import com.mall.platform.dto.MerchantAuditDTO;
 import com.mall.platform.service.AdminService;
+import com.mall.platform.service.MerchantService;
 import com.mall.platform.vo.AdminMerchantVO;
 import com.mall.platform.vo.AdminOrderVO;
 import com.mall.platform.vo.AdminProductVO;
+import com.mall.platform.vo.MerchantAuditVO;
 import com.mall.platform.vo.PageVO;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminManagementController {
 
     private final AdminService adminService;
+    private final MerchantService merchantService;
 
-    public AdminManagementController(AdminService adminService) {
+    public AdminManagementController(AdminService adminService, MerchantService merchantService) {
         this.adminService = adminService;
+        this.merchantService = merchantService;
     }
 
     /**
@@ -44,6 +51,14 @@ public class AdminManagementController {
         queryDTO.setApplyStatus(applyStatus);
         queryDTO.setKeyword(keyword);
         return Result.success(adminService.listMerchants(queryDTO));
+    }
+
+    /**
+     * 管理员审核商家申请。
+     */
+    @PostMapping("/merchants/audit")
+    public Result<MerchantAuditVO> auditMerchant(@Valid @RequestBody MerchantAuditDTO merchantAuditDTO) {
+        return Result.success(merchantService.audit(merchantAuditDTO));
     }
 
     /**

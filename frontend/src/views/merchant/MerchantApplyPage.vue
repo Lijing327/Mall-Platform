@@ -1,7 +1,6 @@
 <template>
   <div class="card">
     <h3>商家入驻申请</h3>
-    <div class="form-row"><label>用户ID</label><input v-model.number="form.userId" type="number" /></div>
     <div class="form-row"><label>商家名称</label><input v-model="form.merchantName" /></div>
     <div class="form-row"><label>联系人</label><input v-model="form.contactName" /></div>
     <div class="form-row"><label>联系电话</label><input v-model="form.contactMobile" /></div>
@@ -14,10 +13,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { merchantApply } from "../../api/merchant";
-import { getUserId } from "../../utils/user-context";
-
 const form = reactive({
-  userId: getUserId(),
   merchantName: "",
   contactName: "",
   contactMobile: "",

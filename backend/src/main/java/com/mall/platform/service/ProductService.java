@@ -7,6 +7,7 @@ import com.mall.platform.common.BizException;
 import com.mall.platform.common.ResultCode;
 import com.mall.platform.dto.ProductQueryDTO;
 import com.mall.platform.entity.ProductEntity;
+import com.mall.platform.enums.ProductSaleStatus;
 import com.mall.platform.entity.ShopEntity;
 import com.mall.platform.repository.ProductRepository;
 import com.mall.platform.repository.ShopRepository;
@@ -47,7 +48,7 @@ public class ProductService {
         }
 
         LambdaQueryWrapper<ProductEntity> productQueryWrapper = new LambdaQueryWrapper<>();
-        productQueryWrapper.eq(ProductEntity::getSaleStatus, "ON_SHELF");
+        productQueryWrapper.eq(ProductEntity::getSaleStatus, ProductSaleStatus.ON_SHELF.getCode());
         productQueryWrapper.eq(ProductEntity::getDeleted, Boolean.FALSE);
         if (StringUtils.hasText(queryDTO.getKeyword())) {
             productQueryWrapper.like(ProductEntity::getProductName, queryDTO.getKeyword().trim());
@@ -88,7 +89,8 @@ public class ProductService {
      */
     public ProductDetailVO getProductDetail(Long productId) {
         ProductEntity productEntity = productRepository.selectById(productId);
-        if (productEntity == null || !Boolean.FALSE.equals(productEntity.getDeleted()) || !"ON_SHELF".equals(productEntity.getSaleStatus())) {
+        if (productEntity == null || !Boolean.FALSE.equals(productEntity.getDeleted())
+                || !ProductSaleStatus.ON_SHELF.getCode().equals(productEntity.getSaleStatus())) {
             throw new BizException(ResultCode.NOT_FOUND.getCode(), "商品不存在或已下架");
         }
 

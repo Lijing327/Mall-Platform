@@ -18,12 +18,13 @@
 
 <script setup>
 import { onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { fetchProductDetail } from "../api/product";
 import { addCart } from "../api/cart";
-import { getUserId } from "../utils/user-context";
+import { getToken } from "../utils/user-context";
 
 const route = useRoute();
+const router = useRouter();
 const detail = ref(null);
 const quantity = ref(1);
 
@@ -33,8 +34,11 @@ async function loadData() {
 }
 
 async function addToCartAction() {
+  if (!getToken()) {
+    await router.push({ path: "/login", query: { redirect: route.fullPath } });
+    return;
+  }
   await addCart({
-    userId: getUserId(),
     productId: Number(route.params.id),
     quantity: quantity.value
   });

@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 
 /**
  * 模拟支付请求参数。
+ * userId 由服务端根据登录态写入，客户端可不传。
  */
 public class OrderPayDTO {
-    @NotNull(message = "userId 不能为空")
     private Long userId;
 
     @NotBlank(message = "orderNo 不能为空")

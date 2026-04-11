@@ -14,15 +14,14 @@
 <script setup>
 import { computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { createMerchantProduct, fetchMerchantProducts, updateMerchantProduct } from "../../api/merchant";
-import { getMerchantId, getUserId } from "../../utils/user-context";
+import { createMerchantProduct, fetchMerchantProduct, updateMerchantProduct } from "../../api/merchant";
+import { getMerchantId } from "../../utils/user-context";
 
 const route = useRoute();
 const router = useRouter();
 const isEdit = computed(() => !!route.params.id);
 
 const form = reactive({
-  userId: getUserId(),
   merchantId: getMerchantId(),
   productName: "",
   productSubtitle: "",
@@ -34,17 +33,13 @@ const form = reactive({
 
 async function loadDetailIfEdit() {
   if (!isEdit.value) return;
-  const res = await fetchMerchantProducts({
-    userId: form.userId,
-    merchantId: form.merchantId,
-    pageNum: 1,
-    pageSize: 200
-  });
-  const target = (res.data.list || []).find((item) => Number(item.id) === Number(route.params.id));
+  const res = await fetchMerchantProduct(route.params.id, { merchantId: form.merchantId });
+  const target = res.data;
   if (!target) return;
   form.productName = target.productName;
   form.productSubtitle = target.productSubtitle || "";
   form.mainImage = target.mainImage || "";
+  form.detail = target.detail || "";
   form.price = Number(target.price || 0);
   form.stock = Number(target.stock || 0);
 }

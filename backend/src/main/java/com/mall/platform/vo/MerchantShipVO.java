@@ -1,5 +1,7 @@
 package com.mall.platform.vo;
 
+import java.time.LocalDateTime;
+
 /**
  * 商家发货返回对象。
  */
@@ -9,6 +11,7 @@ public class MerchantShipVO {
     private String orderStatus;
     private String shippingNo;
     private String shippingRemark;
+    private LocalDateTime shipTime;
 
     public Long getOrderId() {
         return orderId;
@@ -48,5 +51,13 @@ public class MerchantShipVO {
 
     public void setShippingRemark(String shippingRemark) {
         this.shippingRemark = shippingRemark;
+    }
+
+    public LocalDateTime getShipTime() {
+        return shipTime;
+    }
+
+    public void setShipTime(LocalDateTime shipTime) {
+        this.shipTime = shipTime;
     }
 }

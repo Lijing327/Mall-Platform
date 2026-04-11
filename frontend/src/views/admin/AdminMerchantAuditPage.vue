@@ -1,6 +1,9 @@
 <template>
   <div class="card">
-    <h3>商家审核</h3>
+    <div class="page-mark merchant">
+      <h3>商家审核中心</h3>
+      <p>处理入驻申请、通过或驳回，并跟踪审核备注。</p>
+    </div>
     <div class="toolbar">
       <select v-model="applyStatus">
         <option value="">全部状态</option>
@@ -86,6 +89,23 @@ onMounted(loadData);
 </script>
 
 <style scoped>
+.page-mark {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.page-mark h3 {
+  margin: 0 0 6px;
+}
+.page-mark p {
+  margin: 0;
+  color: #5c6370;
+  font-size: 13px;
+}
+.page-mark.merchant {
+  background: #f3f8ff;
+  border: 1px solid #dce9ff;
+}
 .toolbar {
   display: flex;
   gap: 10px;

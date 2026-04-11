@@ -11,6 +11,7 @@ import com.mall.platform.dto.AdminProductQueryDTO;
 import com.mall.platform.entity.MerchantEntity;
 import com.mall.platform.entity.OrderEntity;
 import com.mall.platform.entity.ProductEntity;
+import com.mall.platform.enums.ProductSaleStatus;
 import com.mall.platform.repository.MerchantRepository;
 import com.mall.platform.repository.OrderRepository;
 import com.mall.platform.repository.ProductRepository;
@@ -105,6 +106,8 @@ public class AdminService {
             vo.setPayType(entity.getPayType());
             vo.setPayTime(entity.getPayTime());
             vo.setCreateTime(entity.getCreateTime());
+            vo.setShippingNo(entity.getShippingNo());
+            vo.setShipTime(entity.getShipTime());
             list.add(vo);
         }
 
@@ -160,7 +163,7 @@ public class AdminService {
         if (entity == null || Boolean.TRUE.equals(entity.getDeleted())) {
             throw new BizException(ResultCode.NOT_FOUND.getCode(), "商品不存在");
         }
-        entity.setSaleStatus("OFF_SHELF");
+        entity.setSaleStatus(ProductSaleStatus.OFF_SHELF.getCode());
         productRepository.updateById(entity);
     }
 

@@ -6,14 +6,24 @@ import com.mall.platform.common.BizException;
 import com.mall.platform.common.ResultCode;
 import com.mall.platform.dto.OrderCreateDTO;
 import com.mall.platform.dto.OrderPayDTO;
+import com.mall.platform.config.FeatureFlags;
 import com.mall.platform.entity.CartEntity;
 import com.mall.platform.entity.OrderEntity;
 import com.mall.platform.entity.OrderItemEntity;
 import com.mall.platform.entity.ProductEntity;
+import com.mall.platform.entity.ShopEntity;
+import com.mall.platform.entity.ShopOrderEntity;
+import com.mall.platform.enums.OrderStatus;
+import com.mall.platform.enums.ProductSaleStatus;
 import com.mall.platform.repository.CartRepository;
 import com.mall.platform.repository.OrderItemRepository;
 import com.mall.platform.repository.OrderRepository;
 import com.mall.platform.repository.ProductRepository;
+import com.mall.platform.repository.ShopRepository;
+import com.mall.platform.vo.MyOrderItemVO;
+import com.mall.platform.vo.MyOrderListVO;
+import com.mall.platform.vo.MyOrderShopOrderVO;
+import com.mall.platform.vo.OrderConfirmReceiveVO;
 import com.mall.platform.vo.OrderCreateVO;
 import com.mall.platform.vo.OrderPayVO;
 import org.springframework.stereotype.Service;
@@ -23,28 +33,40 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
-
-    private static final String ORDER_STATUS_PENDING_PAYMENT = "PENDING_PAYMENT";
-    private static final String ORDER_STATUS_PAID = "PAID";
 
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ShopRepository shopRepository;
+    private final ShopOrderService shopOrderService;
+    private final FeatureFlags featureFlags;
 
     public OrderService(CartRepository cartRepository,
                         ProductRepository productRepository,
                         OrderRepository orderRepository,
-                        OrderItemRepository orderItemRepository) {
+                        OrderItemRepository orderItemRepository,
+                        ShopRepository shopRepository,
+                        ShopOrderService shopOrderService,
+                        FeatureFlags featureFlags) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.shopRepository = shopRepository;
+        this.shopOrderService = shopOrderService;
+        this.featureFlags = featureFlags;
     }
 
     /**
@@ -64,7 +86,8 @@ public class OrderService {
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (CartEntity cartEntity : checkedCartList) {
             ProductEntity productEntity = productRepository.selectById(cartEntity.getProductId());
-            if (productEntity == null || Boolean.TRUE.equals(productEntity.getDeleted()) || !"ON_SHELF".equals(productEntity.getSaleStatus())) {
+            if (productEntity == null || Boolean.TRUE.equals(productEntity.getDeleted())
+                    || !ProductSaleStatus.ON_SHELF.getCode().equals(productEntity.getSaleStatus())) {
                 throw new BizException(ResultCode.BAD_REQUEST.getCode(), "存在无效商品，无法下单");
             }
 
@@ -100,7 +123,7 @@ public class OrderService {
         OrderEntity orderEntity = new OrderEntity();
         orderEntity.setOrderNo(generateOrderNo(orderCreateDTO.getUserId()));
         orderEntity.setUserId(orderCreateDTO.getUserId());
-        orderEntity.setOrderStatus(ORDER_STATUS_PENDING_PAYMENT);
+        orderEntity.setOrderStatus(OrderStatus.PENDING_PAYMENT.getCode());
         orderEntity.setTotalAmount(totalAmount);
         orderEntity.setPayAmount(totalAmount);
         orderRepository.insert(orderEntity);
@@ -138,11 +161,11 @@ public class OrderService {
         if (orderEntity == null) {
             throw new BizException(ResultCode.NOT_FOUND.getCode(), "订单不存在");
         }
-        if (!ORDER_STATUS_PENDING_PAYMENT.equals(orderEntity.getOrderStatus())) {
+        if (!OrderStatus.PENDING_PAYMENT.getCode().equals(orderEntity.getOrderStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "当前订单状态不允许支付");
         }
 
-        orderEntity.setOrderStatus(ORDER_STATUS_PAID);
+        orderEntity.setOrderStatus(OrderStatus.PAID.getCode());
         orderEntity.setPayType("MOCK");
         orderEntity.setPayTime(LocalDateTime.now());
         orderRepository.updateById(orderEntity);
@@ -153,6 +176,212 @@ public class OrderService {
         orderPayVO.setPayType(orderEntity.getPayType());
         orderPayVO.setPayTime(orderEntity.getPayTime());
         return orderPayVO;
+    }
+
+    /**
+     * 用户确认收货：仅允许本人待收货（已发货）订单。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public OrderConfirmReceiveVO confirmReceive(Long orderId, Long userId) {
+        OrderEntity orderEntity = orderRepository.selectById(orderId);
+        if (orderEntity == null || !userId.equals(orderEntity.getUserId())) {
+            throw new BizException(ResultCode.NOT_FOUND.getCode(), "订单不存在");
+        }
+        if (!OrderStatus.SHIPPED.getCode().equals(orderEntity.getOrderStatus())) {
+            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "当前订单状态不可确认收货");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        orderEntity.setOrderStatus(OrderStatus.COMPLETED.getCode());
+        orderEntity.setCompleteTime(now);
+        orderEntity.setUpdateTime(now);
+        orderRepository.updateById(orderEntity);
+
+        OrderConfirmReceiveVO vo = new OrderConfirmReceiveVO();
+        vo.setOrderId(orderEntity.getId());
+        vo.setOrderNo(orderEntity.getOrderNo());
+        vo.setOrderStatus(orderEntity.getOrderStatus());
+        vo.setCompleteTime(orderEntity.getCompleteTime());
+        return vo;
+    }
+
+    /**
+     * 当前用户的订单列表（含订单项），按创建时间倒序。
+     */
+    public List<MyOrderListVO> listMyOrders(Long userId) {
+        LambdaQueryWrapper<OrderEntity> orderWrapper = new LambdaQueryWrapper<>();
+        orderWrapper.eq(OrderEntity::getUserId, userId);
+        orderWrapper.orderByDesc(OrderEntity::getCreateTime);
+        List<OrderEntity> orders = orderRepository.selectList(orderWrapper);
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> orderIds = new ArrayList<>();
+        for (OrderEntity orderEntity : orders) {
+            orderIds.add(orderEntity.getId());
+        }
+
+        LambdaQueryWrapper<OrderItemEntity> itemWrapper = new LambdaQueryWrapper<>();
+        itemWrapper.in(OrderItemEntity::getOrderId, orderIds);
+        itemWrapper.orderByAsc(OrderItemEntity::getId);
+        List<OrderItemEntity> allItems = orderItemRepository.selectList(itemWrapper);
+
+        Map<Long, List<OrderItemEntity>> itemsByOrderId = new HashMap<>();
+        for (OrderItemEntity orderItemEntity : allItems) {
+            itemsByOrderId.computeIfAbsent(orderItemEntity.getOrderId(), k -> new ArrayList<>()).add(orderItemEntity);
+        }
+
+        Set<Long> shopIds = new HashSet<>();
+        for (OrderItemEntity orderItemEntity : allItems) {
+            shopIds.add(orderItemEntity.getShopId());
+        }
+        Map<Long, ShopEntity> shopById = new HashMap<>();
+        for (Long shopId : shopIds) {
+            ShopEntity shopEntity = shopRepository.selectById(shopId);
+            if (shopEntity != null) {
+                shopById.put(shopId, shopEntity);
+            }
+        }
+
+        List<ShopOrderEntity> allShopOrders = shopOrderService.listByOrderIds(orderIds);
+        Map<Long, List<ShopOrderEntity>> shopOrdersByOrderId = allShopOrders.stream()
+                .collect(Collectors.groupingBy(ShopOrderEntity::getOrderId));
+
+        List<MyOrderListVO> result = new ArrayList<>();
+        for (OrderEntity orderEntity : orders) {
+            MyOrderListVO vo = new MyOrderListVO();
+            vo.setOrderId(orderEntity.getId());
+            vo.setOrderNo(orderEntity.getOrderNo());
+            vo.setOrderStatus(orderEntity.getOrderStatus());
+            vo.setTotalAmount(orderEntity.getTotalAmount());
+            vo.setPayAmount(orderEntity.getPayAmount());
+            vo.setPayType(orderEntity.getPayType());
+            vo.setPayTime(orderEntity.getPayTime());
+            vo.setCreateTime(orderEntity.getCreateTime());
+            vo.setCompleteTime(orderEntity.getCompleteTime());
+            vo.setReceiverName(orderEntity.getReceiverName());
+            vo.setRemark(orderEntity.getRemark());
+            vo.setShippingNo(orderEntity.getShippingNo());
+            vo.setShippingRemark(orderEntity.getShippingRemark());
+            vo.setShipTime(orderEntity.getShipTime());
+
+            List<MyOrderItemVO> itemVos = new ArrayList<>();
+            for (OrderItemEntity e : itemsByOrderId.getOrDefault(orderEntity.getId(), List.of())) {
+                MyOrderItemVO itemVo = new MyOrderItemVO();
+                itemVo.setProductId(e.getProductId());
+                itemVo.setShopId(e.getShopId());
+                itemVo.setProductName(e.getProductName());
+                itemVo.setProductImage(e.getProductImage());
+                itemVo.setProductPrice(e.getProductPrice());
+                itemVo.setQuantity(e.getQuantity());
+                itemVo.setItemAmount(e.getItemAmount());
+                itemVo.setItemStatus(e.getItemStatus());
+                itemVos.add(itemVo);
+            }
+            vo.setItems(itemVos);
+
+            List<OrderItemEntity> lineItems = itemsByOrderId.getOrDefault(orderEntity.getId(), List.of());
+            vo.setShopOrders(buildShopOrdersForDisplay(orderEntity, lineItems, shopById,
+                    shopOrdersByOrderId.getOrDefault(orderEntity.getId(), List.of())));
+
+            result.add(vo);
+        }
+        return result;
+    }
+
+    /**
+     * 组装子订单展示：优先使用 shop_order 表；否则在关闭拆单开关时返回一条主单派生默认子单；开启拆单且无表数据时按店铺汇总订单行。
+     */
+    private List<MyOrderShopOrderVO> buildShopOrdersForDisplay(OrderEntity orderEntity,
+                                                             List<OrderItemEntity> lineItems,
+                                                             Map<Long, ShopEntity> shopById,
+                                                             List<ShopOrderEntity> persistedShopOrders) {
+        if (!persistedShopOrders.isEmpty()) {
+            List<MyOrderShopOrderVO> vos = new ArrayList<>();
+            for (ShopOrderEntity e : persistedShopOrders) {
+                vos.add(toMyOrderShopOrderVo(e));
+            }
+            return vos;
+        }
+        if (featureFlags.splitOrderEnabled()) {
+            List<MyOrderShopOrderVO> grouped = buildGroupedSyntheticShopOrders(orderEntity, lineItems, shopById);
+            if (!grouped.isEmpty()) {
+                return grouped;
+            }
+            return List.of(buildDefaultSyntheticShopOrder(orderEntity, lineItems, shopById));
+        }
+        return List.of(buildDefaultSyntheticShopOrder(orderEntity, lineItems, shopById));
+    }
+
+    private static MyOrderShopOrderVO toMyOrderShopOrderVo(ShopOrderEntity e) {
+        MyOrderShopOrderVO vo = new MyOrderShopOrderVO();
+        vo.setId(e.getId());
+        vo.setOrderId(e.getOrderId());
+        vo.setShopId(e.getShopId());
+        vo.setShopName(e.getShopName());
+        vo.setAmount(e.getAmount());
+        vo.setStatus(e.getStatus());
+        vo.setShippingNo(e.getShippingNo());
+        vo.setShippingRemark(e.getShippingRemark());
+        vo.setShipTime(e.getShipTime());
+        vo.setCompleteTime(e.getCompleteTime());
+        return vo;
+    }
+
+    /**
+     * 单店默认：一条子单，金额与物流字段与主单对齐，店铺取首行订单项所属店铺。
+     */
+    private static MyOrderShopOrderVO buildDefaultSyntheticShopOrder(OrderEntity orderEntity,
+                                                                     List<OrderItemEntity> lineItems,
+                                                                     Map<Long, ShopEntity> shopById) {
+        MyOrderShopOrderVO vo = new MyOrderShopOrderVO();
+        vo.setId(null);
+        vo.setOrderId(orderEntity.getId());
+        if (lineItems.isEmpty()) {
+            vo.setShopId(null);
+            vo.setShopName("-");
+        } else {
+            Long sid = lineItems.get(0).getShopId();
+            vo.setShopId(sid);
+            ShopEntity shop = shopById.get(sid);
+            vo.setShopName(shop != null ? shop.getShopName() : "-");
+        }
+        vo.setAmount(orderEntity.getPayAmount());
+        vo.setStatus(orderEntity.getOrderStatus());
+        vo.setShippingNo(orderEntity.getShippingNo());
+        vo.setShippingRemark(orderEntity.getShippingRemark());
+        vo.setShipTime(orderEntity.getShipTime());
+        vo.setCompleteTime(orderEntity.getCompleteTime());
+        return vo;
+    }
+
+    /**
+     * 拆单预览：无 shop_order 表数据时，按店铺汇总金额（物流仍沿用主单字段，仅作占位展示）。
+     */
+    private static List<MyOrderShopOrderVO> buildGroupedSyntheticShopOrders(OrderEntity orderEntity,
+                                                                           List<OrderItemEntity> lineItems,
+                                                                           Map<Long, ShopEntity> shopById) {
+        Map<Long, BigDecimal> amountByShop = new LinkedHashMap<>();
+        for (OrderItemEntity it : lineItems) {
+            amountByShop.merge(it.getShopId(), it.getItemAmount(), BigDecimal::add);
+        }
+        List<MyOrderShopOrderVO> list = new ArrayList<>();
+        for (Map.Entry<Long, BigDecimal> en : amountByShop.entrySet()) {
+            MyOrderShopOrderVO vo = new MyOrderShopOrderVO();
+            vo.setId(null);
+            vo.setOrderId(orderEntity.getId());
+            vo.setShopId(en.getKey());
+            ShopEntity shop = shopById.get(en.getKey());
+            vo.setShopName(shop != null ? shop.getShopName() : "-");
+            vo.setAmount(en.getValue());
+            vo.setStatus(orderEntity.getOrderStatus());
+            vo.setShippingNo(orderEntity.getShippingNo());
+            vo.setShippingRemark(orderEntity.getShippingRemark());
+            vo.setShipTime(orderEntity.getShipTime());
+            vo.setCompleteTime(orderEntity.getCompleteTime());
+            list.add(vo);
+        }
+        return list;
     }
 
     private String generateOrderNo(Long userId) {

@@ -11,6 +11,8 @@ import com.mall.platform.entity.MerchantEntity;
 import com.mall.platform.entity.OrderEntity;
 import com.mall.platform.entity.OrderItemEntity;
 import com.mall.platform.entity.ShopEntity;
+import com.mall.platform.enums.MerchantApplyStatus;
+import com.mall.platform.enums.OrderStatus;
 import com.mall.platform.repository.MerchantRepository;
 import com.mall.platform.repository.OrderItemRepository;
 import com.mall.platform.repository.OrderRepository;
@@ -23,6 +25,7 @@ import com.mall.platform.vo.PageVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -88,6 +91,8 @@ public class MerchantOrderService {
             merchantOrderListVO.setPayType(orderEntity.getPayType());
             merchantOrderListVO.setPayTime(orderEntity.getPayTime());
             merchantOrderListVO.setCreateTime(orderEntity.getCreateTime());
+            merchantOrderListVO.setShippingNo(orderEntity.getShippingNo());
+            merchantOrderListVO.setShipTime(orderEntity.getShipTime());
             list.add(merchantOrderListVO);
         }
 
@@ -126,6 +131,9 @@ public class MerchantOrderService {
         detailVO.setReceiverMobile(orderEntity.getReceiverMobile());
         detailVO.setReceiverAddress(orderEntity.getReceiverAddress());
         detailVO.setRemark(orderEntity.getRemark());
+        detailVO.setShippingNo(orderEntity.getShippingNo());
+        detailVO.setShippingRemark(orderEntity.getShippingRemark());
+        detailVO.setShipTime(orderEntity.getShipTime());
 
         List<MerchantOrderItemVO> items = new ArrayList<>();
         for (OrderItemEntity itemEntity : merchantItems) {
@@ -158,24 +166,27 @@ public class MerchantOrderService {
         if (orderEntity == null) {
             throw new BizException(ResultCode.NOT_FOUND.getCode(), "订单不存在");
         }
-        if (!"PAID".equals(orderEntity.getOrderStatus())) {
+        if (!OrderStatus.PAID.getCode().equals(orderEntity.getOrderStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "仅已支付订单可发货");
         }
 
-        orderEntity.setOrderStatus("SHIPPED");
-        String remark = "shippingNo=" + shipDTO.getShippingNo();
-        if (shipDTO.getShippingRemark() != null && !shipDTO.getShippingRemark().trim().isEmpty()) {
-            remark = remark + "; shippingRemark=" + shipDTO.getShippingRemark().trim();
-        }
-        orderEntity.setRemark(remark);
+        LocalDateTime now = LocalDateTime.now();
+        orderEntity.setOrderStatus(OrderStatus.SHIPPED.getCode());
+        orderEntity.setShippingNo(shipDTO.getShippingNo());
+        String shipRm = shipDTO.getShippingRemark();
+        orderEntity.setShippingRemark(
+                shipRm == null || shipRm.trim().isEmpty() ? null : shipRm.trim());
+        orderEntity.setShipTime(now);
+        orderEntity.setUpdateTime(now);
         orderRepository.updateById(orderEntity);
 
         MerchantShipVO shipVO = new MerchantShipVO();
         shipVO.setOrderId(orderEntity.getId());
         shipVO.setOrderNo(orderEntity.getOrderNo());
         shipVO.setOrderStatus(orderEntity.getOrderStatus());
-        shipVO.setShippingNo(shipDTO.getShippingNo());
-        shipVO.setShippingRemark(shipDTO.getShippingRemark());
+        shipVO.setShippingNo(orderEntity.getShippingNo());
+        shipVO.setShippingRemark(orderEntity.getShippingRemark());
+        shipVO.setShipTime(orderEntity.getShipTime());
         return shipVO;
     }
 
@@ -189,7 +200,7 @@ public class MerchantOrderService {
             merchantWrapper.eq(MerchantEntity::getId, merchantId);
         }
         MerchantEntity merchantEntity = merchantRepository.selectOne(merchantWrapper);
-        if (merchantEntity == null || !"APPROVED".equals(merchantEntity.getApplyStatus())) {
+        if (merchantEntity == null || !MerchantApplyStatus.APPROVED.getCode().equals(merchantEntity.getApplyStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "当前用户不是已审核通过商家");
         }
 

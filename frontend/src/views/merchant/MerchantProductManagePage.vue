@@ -48,16 +48,14 @@ import {
   offShelfMerchantProduct,
   onShelfMerchantProduct
 } from "../../api/merchant";
-import { getMerchantId, getUserId } from "../../utils/user-context";
+import { getMerchantId } from "../../utils/user-context";
 
-const userId = getUserId();
 const merchantId = getMerchantId();
 const keyword = ref("");
 const list = ref([]);
 
 async function loadData() {
   const res = await fetchMerchantProducts({
-    userId,
     merchantId,
     pageNum: 1,
     pageSize: 100,
@@ -72,16 +70,16 @@ function search() {
 
 async function toggleShelf(item) {
   if (item.saleStatus === "ON_SHELF") {
-    await offShelfMerchantProduct(item.id, { userId, merchantId });
+    await offShelfMerchantProduct(item.id, { merchantId });
   } else {
-    await onShelfMerchantProduct(item.id, { userId, merchantId });
+    await onShelfMerchantProduct(item.id, { merchantId });
   }
   await loadData();
 }
 
 async function removeProduct(item) {
   if (!window.confirm(`确认删除商品【${item.productName}】吗？`)) return;
-  await deleteMerchantProduct(item.id, { userId, merchantId });
+  await deleteMerchantProduct(item.id, { merchantId });
   await loadData();
 }
 

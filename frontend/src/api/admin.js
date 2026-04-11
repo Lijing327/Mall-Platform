@@ -5,8 +5,7 @@ export function fetchAdminMerchants(params) {
 }
 
 export function auditMerchant(data) {
-  // 复用现有后端审核接口
-  return http.post("/api/admin/merchant/audit", data);
+  return http.post("/api/admin/merchants/audit", data);
 }
 
 export function fetchAdminOrders(params) {

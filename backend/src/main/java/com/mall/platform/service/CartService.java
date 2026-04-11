@@ -6,6 +6,7 @@ import com.mall.platform.common.ResultCode;
 import com.mall.platform.dto.CartAddDTO;
 import com.mall.platform.entity.CartEntity;
 import com.mall.platform.entity.ProductEntity;
+import com.mall.platform.enums.ProductSaleStatus;
 import com.mall.platform.entity.ShopEntity;
 import com.mall.platform.repository.CartRepository;
 import com.mall.platform.repository.ProductRepository;
@@ -38,7 +39,8 @@ public class CartService {
     @Transactional(rollbackFor = Exception.class)
     public void addToCart(CartAddDTO cartAddDTO) {
         ProductEntity productEntity = productRepository.selectById(cartAddDTO.getProductId());
-        if (productEntity == null || Boolean.TRUE.equals(productEntity.getDeleted()) || !"ON_SHELF".equals(productEntity.getSaleStatus())) {
+        if (productEntity == null || Boolean.TRUE.equals(productEntity.getDeleted())
+                || !ProductSaleStatus.ON_SHELF.getCode().equals(productEntity.getSaleStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "商品不存在或未上架");
         }
 

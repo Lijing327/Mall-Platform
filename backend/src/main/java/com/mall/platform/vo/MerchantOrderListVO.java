@@ -14,6 +14,8 @@ public class MerchantOrderListVO {
     private String payType;
     private LocalDateTime payTime;
     private LocalDateTime createTime;
+    private String shippingNo;
+    private LocalDateTime shipTime;
 
     public Long getOrderId() {
         return orderId;
@@ -69,5 +71,21 @@ public class MerchantOrderListVO {
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public String getShippingNo() {
+        return shippingNo;
+    }
+
+    public void setShippingNo(String shippingNo) {
+        this.shippingNo = shippingNo;
+    }
+
+    public LocalDateTime getShipTime() {
+        return shipTime;
+    }
+
+    public void setShipTime(LocalDateTime shipTime) {
+        this.shipTime = shipTime;
     }
 }

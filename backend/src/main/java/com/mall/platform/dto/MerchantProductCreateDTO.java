@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 
 /**
  * 商家新增商品参数。
+ * userId 由服务端根据登录态写入，客户端可不传。
  */
 public class MerchantProductCreateDTO {
-    @NotNull(message = "userId 不能为空")
     private Long userId;
 
     private Long merchantId;

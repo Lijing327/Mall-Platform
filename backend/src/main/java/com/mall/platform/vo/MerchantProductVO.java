@@ -13,6 +13,7 @@ public class MerchantProductVO {
     private String productName;
     private String productSubtitle;
     private String mainImage;
+    private String detail;
     private BigDecimal price;
     private Integer stock;
     private String saleStatus;
@@ -65,6 +66,14 @@ public class MerchantProductVO {
 
     public void setMainImage(String mainImage) {
         this.mainImage = mainImage;
+    }
+
+    public String getDetail() {
+        return detail;
+    }
+
+    public void setDetail(String detail) {
+        this.detail = detail;
     }
 
     public BigDecimal getPrice() {

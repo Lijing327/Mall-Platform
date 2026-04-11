@@ -1,6 +1,9 @@
 <template>
   <div class="card">
-    <h3>全平台订单列表</h3>
+    <div class="page-mark order">
+      <h3>全平台订单中心</h3>
+      <p>查看所有用户订单，按状态和订单号筛选追踪交易流转。</p>
+    </div>
     <div class="toolbar">
       <select v-model="orderStatus">
         <option value="">全部状态</option>
@@ -23,6 +26,8 @@
           <th>实付金额</th>
           <th>支付方式</th>
           <th>支付时间</th>
+          <th>快递单号</th>
+          <th>发货时间</th>
         </tr>
       </thead>
       <tbody>
@@ -34,6 +39,8 @@
           <td>{{ item.payAmount }}</td>
           <td>{{ item.payType || "-" }}</td>
           <td>{{ item.payTime || "-" }}</td>
+          <td>{{ item.shippingNo || "-" }}</td>
+          <td>{{ item.shipTime || "-" }}</td>
         </tr>
       </tbody>
     </table>
@@ -62,6 +69,23 @@ onMounted(loadData);
 </script>
 
 <style scoped>
+.page-mark {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.page-mark h3 {
+  margin: 0 0 6px;
+}
+.page-mark p {
+  margin: 0;
+  color: #5c6370;
+  font-size: 13px;
+}
+.page-mark.order {
+  background: #f7f5ff;
+  border: 1px solid #e7e2ff;
+}
 .toolbar {
   display: flex;
   gap: 10px;

@@ -48,6 +48,18 @@ public class OrderEntity {
     @TableField("remark")
     private String remark;
 
+    @TableField("complete_time")
+    private LocalDateTime completeTime;
+
+    @TableField("shipping_no")
+    private String shippingNo;
+
+    @TableField("shipping_remark")
+    private String shippingRemark;
+
+    @TableField("ship_time")
+    private LocalDateTime shipTime;
+
     @TableField("create_time")
     private LocalDateTime createTime;
 
@@ -148,6 +160,38 @@ public class OrderEntity {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public LocalDateTime getCompleteTime() {
+        return completeTime;
+    }
+
+    public void setCompleteTime(LocalDateTime completeTime) {
+        this.completeTime = completeTime;
+    }
+
+    public String getShippingNo() {
+        return shippingNo;
+    }
+
+    public void setShippingNo(String shippingNo) {
+        this.shippingNo = shippingNo;
+    }
+
+    public String getShippingRemark() {
+        return shippingRemark;
+    }
+
+    public void setShippingRemark(String shippingRemark) {
+        this.shippingRemark = shippingRemark;
+    }
+
+    public LocalDateTime getShipTime() {
+        return shipTime;
+    }
+
+    public void setShipTime(LocalDateTime shipTime) {
+        this.shipTime = shipTime;
     }
 
     public LocalDateTime getCreateTime() {

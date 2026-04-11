@@ -7,27 +7,21 @@ import com.mall.platform.dto.MerchantApplyDTO;
 import com.mall.platform.dto.MerchantAuditDTO;
 import com.mall.platform.entity.MerchantEntity;
 import com.mall.platform.entity.ShopEntity;
+import com.mall.platform.enums.MerchantApplyStatus;
 import com.mall.platform.repository.MerchantRepository;
 import com.mall.platform.repository.ShopRepository;
 import com.mall.platform.vo.MerchantApplyVO;
 import com.mall.platform.vo.MerchantAuditVO;
-import com.mall.platform.vo.MerchantListItemVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class MerchantService {
-
-    private static final String APPLY_STATUS_PENDING = "PENDING";
-    private static final String APPLY_STATUS_APPROVED = "APPROVED";
-    private static final String APPLY_STATUS_REJECTED = "REJECTED";
 
     private final MerchantRepository merchantRepository;
     private final ShopRepository shopRepository;
@@ -55,7 +49,7 @@ public class MerchantService {
         merchantEntity.setMerchantName(merchantApplyDTO.getMerchantName());
         merchantEntity.setContactName(merchantApplyDTO.getContactName());
         merchantEntity.setContactMobile(merchantApplyDTO.getContactMobile());
-        merchantEntity.setApplyStatus(APPLY_STATUS_PENDING);
+        merchantEntity.setApplyStatus(MerchantApplyStatus.PENDING.getCode());
         merchantEntity.setApplyTime(LocalDateTime.now());
         merchantEntity.setStatus("ENABLED");
 
@@ -75,32 +69,6 @@ public class MerchantService {
     }
 
     /**
-     * 管理员查询商家申请列表。
-     */
-    public List<MerchantListItemVO> listForAdmin() {
-        LambdaQueryWrapper<MerchantEntity> merchantQueryWrapper = new LambdaQueryWrapper<>();
-        merchantQueryWrapper.orderByDesc(MerchantEntity::getCreateTime);
-        List<MerchantEntity> merchantList = merchantRepository.selectList(merchantQueryWrapper);
-
-        List<MerchantListItemVO> result = new ArrayList<>();
-        for (MerchantEntity merchantEntity : merchantList) {
-            MerchantListItemVO merchantListItemVO = new MerchantListItemVO();
-            merchantListItemVO.setMerchantId(merchantEntity.getId());
-            merchantListItemVO.setUserId(merchantEntity.getUserId());
-            merchantListItemVO.setMerchantCode(merchantEntity.getMerchantCode());
-            merchantListItemVO.setMerchantName(merchantEntity.getMerchantName());
-            merchantListItemVO.setContactName(merchantEntity.getContactName());
-            merchantListItemVO.setContactMobile(merchantEntity.getContactMobile());
-            merchantListItemVO.setApplyStatus(merchantEntity.getApplyStatus());
-            merchantListItemVO.setAuditRemark(merchantEntity.getAuditRemark());
-            merchantListItemVO.setApplyTime(merchantEntity.getApplyTime());
-            merchantListItemVO.setAuditTime(merchantEntity.getAuditTime());
-            result.add(merchantListItemVO);
-        }
-        return result;
-    }
-
-    /**
      * 管理员审核：通过时自动创建第三方商家店铺。
      */
     @Transactional(rollbackFor = Exception.class)
@@ -109,7 +77,7 @@ public class MerchantService {
         if (merchantEntity == null) {
             throw new BizException(ResultCode.NOT_FOUND.getCode(), "商家申请不存在");
         }
-        if (!APPLY_STATUS_PENDING.equals(merchantEntity.getApplyStatus())) {
+        if (!MerchantApplyStatus.PENDING.getCode().equals(merchantEntity.getApplyStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "当前申请不是待审核状态");
         }
 
@@ -120,7 +88,7 @@ public class MerchantService {
         Long shopId = null;
         String action = merchantAuditDTO.getAuditAction().trim().toUpperCase();
         if ("APPROVE".equals(action)) {
-            merchantEntity.setApplyStatus(APPLY_STATUS_APPROVED);
+            merchantEntity.setApplyStatus(MerchantApplyStatus.APPROVED.getCode());
 
             // MVP 按一个商家一个店铺实现，若已存在则不重复创建
             LambdaQueryWrapper<ShopEntity> shopQueryWrapper = new LambdaQueryWrapper<>();
@@ -140,7 +108,7 @@ public class MerchantService {
                 shopId = existedShop.getId();
             }
         } else if ("REJECT".equals(action)) {
-            merchantEntity.setApplyStatus(APPLY_STATUS_REJECTED);
+            merchantEntity.setApplyStatus(MerchantApplyStatus.REJECTED.getCode());
             if (!StringUtils.hasText(merchantAuditDTO.getAuditRemark())) {
                 throw new BizException(ResultCode.BAD_REQUEST.getCode(), "驳回时请填写驳回原因");
             }

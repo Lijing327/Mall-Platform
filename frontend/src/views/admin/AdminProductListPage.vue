@@ -1,6 +1,9 @@
 <template>
   <div class="card">
-    <h3>全平台商品列表</h3>
+    <div class="page-mark product">
+      <h3>全平台商品中心</h3>
+      <p>查看所有店铺商品，支持按状态筛选并执行管理员下架。</p>
+    </div>
     <div class="toolbar">
       <input v-model="keyword" placeholder="商品名称关键字" />
       <select v-model="saleStatus">
@@ -69,6 +72,23 @@ onMounted(loadData);
 </script>
 
 <style scoped>
+.page-mark {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.page-mark h3 {
+  margin: 0 0 6px;
+}
+.page-mark p {
+  margin: 0;
+  color: #5c6370;
+  font-size: 13px;
+}
+.page-mark.product {
+  background: #f4fbf4;
+  border: 1px solid #dff2df;
+}
 .toolbar {
   display: flex;
   gap: 10px;

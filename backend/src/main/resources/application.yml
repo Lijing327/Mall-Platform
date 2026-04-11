@@ -20,3 +20,19 @@ mybatis-plus:
 # 说明：
 # 1. 数据库连接已拆分到 application-test.yml 与 application-prod.yml。
 # 2. 账号密码建议使用环境变量注入，避免明文写入仓库。
+
+mall:
+  # 多商户扩展特性开关（默认关闭，保持自营单店主流程不变）
+  feature:
+    multi-shop: false
+    split-order: false
+    settlement: false
+  auth:
+    # HMAC 签发令牌用，生产务必覆盖
+    token-secret: ${MALL_AUTH_TOKEN_SECRET:mall-mvp-change-me-in-prod-min-32-chars!!}
+    # MVP 共用登录口令（仅用于隔离「未持有令牌」的访问）
+    login-password: ${MALL_AUTH_LOGIN_PASSWORD:mvp-demo}
+    # 视为管理员的用户 ID（可配置多个）
+    admin-user-ids:
+      - ${MALL_AUTH_ADMIN_USER_ID:1}
+    token-ttl-seconds: ${MALL_AUTH_TOKEN_TTL_SECONDS:259200}

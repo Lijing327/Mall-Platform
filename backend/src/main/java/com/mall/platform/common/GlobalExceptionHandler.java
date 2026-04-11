@@ -38,6 +38,37 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result<Object> handleException(Exception exception) {
-        return Result.fail(ResultCode.INTERNAL_ERROR.getCode(), exception.getMessage());
+        return Result.fail(ResultCode.INTERNAL_ERROR.getCode(), extractDeepestMessage(exception));
+    }
+
+    /**
+     * 从异常链中取出最有用的提示（优先 JDBC/SQL 根因），避免只显示 MyBatisSystemException 外壳。
+     */
+    private static String extractDeepestMessage(Throwable error) {
+        Throwable cursor = error;
+        String firstNonTrivial = null;
+        while (cursor != null) {
+            if (cursor instanceof java.sql.SQLException) {
+                String m = cursor.getMessage();
+                if (m != null && !m.isBlank()) {
+                    return m;
+                }
+            }
+            String m = cursor.getMessage();
+            if (m != null && !m.isBlank() && !m.equals(cursor.getClass().getName())) {
+                if (firstNonTrivial == null) {
+                    firstNonTrivial = m;
+                }
+            }
+            Throwable next = cursor.getCause();
+            if (next == null || next == cursor) {
+                break;
+            }
+            cursor = next;
+        }
+        if (firstNonTrivial != null) {
+            return firstNonTrivial;
+        }
+        return error.getClass().getSimpleName();
     }
 }

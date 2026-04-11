@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 
 /**
  * 加入购物车请求参数。
+ * userId 由服务端根据登录态写入，客户端可不传。
  */
 public class CartAddDTO {
-    @NotNull(message = "userId 不能为空")
     private Long userId;
 
     @NotNull(message = "productId 不能为空")

@@ -41,9 +41,10 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRoute } from "vue-router";
 import { fetchProductList } from "../api/product";
 
+const route = useRoute();
 const keyword = ref("");
 const pageNum = ref(1);
 const pageSize = ref(10);
@@ -81,7 +82,12 @@ function nextPage() {
   }
 }
 
-onMounted(loadData);
+onMounted(() => {
+  if (route.query.needAdmin === "1") {
+    window.alert("需要管理员账号登录（见后端 mall.auth.admin-user-ids）。");
+  }
+  loadData();
+});
 </script>
 
 <style scoped>

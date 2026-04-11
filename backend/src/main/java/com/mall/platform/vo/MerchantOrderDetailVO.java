@@ -19,6 +19,9 @@ public class MerchantOrderDetailVO {
     private String receiverMobile;
     private String receiverAddress;
     private String remark;
+    private String shippingNo;
+    private String shippingRemark;
+    private LocalDateTime shipTime;
     private List<MerchantOrderItemVO> items;
 
     public Long getOrderId() {
@@ -107,6 +110,30 @@ public class MerchantOrderDetailVO {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getShippingNo() {
+        return shippingNo;
+    }
+
+    public void setShippingNo(String shippingNo) {
+        this.shippingNo = shippingNo;
+    }
+
+    public String getShippingRemark() {
+        return shippingRemark;
+    }
+
+    public void setShippingRemark(String shippingRemark) {
+        this.shippingRemark = shippingRemark;
+    }
+
+    public LocalDateTime getShipTime() {
+        return shipTime;
+    }
+
+    public void setShipTime(LocalDateTime shipTime) {
+        this.shipTime = shipTime;
     }
 
     public List<MerchantOrderItemVO> getItems() {
