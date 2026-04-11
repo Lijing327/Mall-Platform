@@ -12,6 +12,9 @@
 | `alter_orders_add_complete_time.sql` | 已有库增量：为 `orders` 增加 `complete_time`（若已用旧版全量脚本可补执行） |
 | `alter_orders_add_shipping_fields.sql` | 已有库增量：`shipping_no` / `shipping_remark` / `ship_time` |
 | `alter_add_shop_order.sql` | 已有库增量：新增子订单表 `shop_order`（多店铺扩展预留；全量脚本已含建表时可不执行） |
+| `alter_add_user_address.sql` | 已有库增量：新增 `user_address`（地址簿；**若库是早期建的、未跑过新版全量脚本则必须执行**） |
+
+> 若接口报错「对象名 `user_address` 无效」，说明当前库缺少地址表：在**与后端连接串一致的数据库**上执行 `alter_add_user_address.sql`（注意脚本内 `USE` 与 `databaseName` 一致）。
 
 > 实体 `DemoEntity` / `demo_table` 仅为分层演示，**未纳入**业务初始化脚本。
 

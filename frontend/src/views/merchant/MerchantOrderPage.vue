@@ -17,7 +17,7 @@
         <tr v-for="item in list" :key="item.orderId">
           <td>{{ item.orderId }}</td>
           <td>{{ item.orderNo }}</td>
-          <td>{{ item.orderStatus }}</td>
+          <td>{{ orderStatusZh(item.orderStatus) }}</td>
           <td>{{ item.payAmount }}</td>
           <td>{{ item.shippingNo || "-" }}</td>
           <td>{{ item.shipTime || "-" }}</td>
@@ -37,7 +37,7 @@
 
     <div v-if="detail" class="detail card">
       <h4>订单详情：{{ detail.orderNo }}</h4>
-      <p>状态：{{ detail.orderStatus }}</p>
+      <p>状态：{{ orderStatusZh(detail.orderStatus) }}</p>
       <p>收货信息：{{ detail.receiverName || "-" }} {{ detail.receiverMobile || "-" }}</p>
       <p>地址：{{ detail.receiverAddress || "-" }}</p>
       <p v-if="detail.remark"><span class="muted">用户备注</span> {{ detail.remark }}</p>
@@ -71,6 +71,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { fetchMerchantOrderDetail, fetchMerchantOrders, shipMerchantOrder } from "../../api/merchant";
+import { orderStatusZh } from "../../utils/display-labels";
 import { getMerchantId } from "../../utils/user-context";
 
 const merchantId = getMerchantId();

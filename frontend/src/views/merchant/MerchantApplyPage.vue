@@ -13,6 +13,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { merchantApply } from "../../api/merchant";
+import { applyStatusZh } from "../../utils/display-labels";
 const form = reactive({
   merchantName: "",
   contactName: "",
@@ -23,7 +24,7 @@ const result = ref("");
 
 async function submitApply() {
   const res = await merchantApply(form);
-  result.value = `申请已提交，商家ID=${res.data.merchantId}，状态=${res.data.applyStatus}`;
+  result.value = `申请已提交，商家ID=${res.data.merchantId}，状态=${applyStatusZh(res.data.applyStatus)}`;
 }
 </script>
 

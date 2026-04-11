@@ -13,6 +13,7 @@ import com.mall.platform.entity.OrderItemEntity;
 import com.mall.platform.entity.ProductEntity;
 import com.mall.platform.entity.ShopEntity;
 import com.mall.platform.entity.ShopOrderEntity;
+import com.mall.platform.entity.UserAddressEntity;
 import com.mall.platform.enums.OrderStatus;
 import com.mall.platform.enums.ProductSaleStatus;
 import com.mall.platform.repository.CartRepository;
@@ -52,6 +53,7 @@ public class OrderService {
     private final ShopRepository shopRepository;
     private final ShopOrderService shopOrderService;
     private final FeatureFlags featureFlags;
+    private final UserAddressService userAddressService;
 
     public OrderService(CartRepository cartRepository,
                         ProductRepository productRepository,
@@ -59,7 +61,8 @@ public class OrderService {
                         OrderItemRepository orderItemRepository,
                         ShopRepository shopRepository,
                         ShopOrderService shopOrderService,
-                        FeatureFlags featureFlags) {
+                        FeatureFlags featureFlags,
+                        UserAddressService userAddressService) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
@@ -67,6 +70,7 @@ public class OrderService {
         this.shopRepository = shopRepository;
         this.shopOrderService = shopOrderService;
         this.featureFlags = featureFlags;
+        this.userAddressService = userAddressService;
     }
 
     /**
@@ -74,6 +78,11 @@ public class OrderService {
      */
     @Transactional(rollbackFor = Exception.class)
     public OrderCreateVO createOrder(OrderCreateDTO orderCreateDTO) {
+        UserAddressEntity address = userAddressService.findOwnEntity(orderCreateDTO.getAddressId(), orderCreateDTO.getUserId());
+        if (address == null) {
+            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "收货地址不存在或不可用");
+        }
+
         LambdaQueryWrapper<CartEntity> cartQueryWrapper = new LambdaQueryWrapper<>();
         cartQueryWrapper.eq(CartEntity::getUserId, orderCreateDTO.getUserId());
         cartQueryWrapper.eq(CartEntity::getChecked, Boolean.TRUE);
@@ -126,6 +135,12 @@ public class OrderService {
         orderEntity.setOrderStatus(OrderStatus.PENDING_PAYMENT.getCode());
         orderEntity.setTotalAmount(totalAmount);
         orderEntity.setPayAmount(totalAmount);
+        orderEntity.setReceiverName(address.getReceiverName());
+        orderEntity.setReceiverMobile(address.getReceiverMobile());
+        orderEntity.setReceiverAddress(buildFullAddress(address));
+        if (orderCreateDTO.getRemark() != null && !orderCreateDTO.getRemark().isBlank()) {
+            orderEntity.setRemark(orderCreateDTO.getRemark().trim());
+        }
         orderRepository.insert(orderEntity);
 
         for (OrderItemEntity orderItemEntity : orderItemList) {
@@ -260,6 +275,8 @@ public class OrderService {
             vo.setCreateTime(orderEntity.getCreateTime());
             vo.setCompleteTime(orderEntity.getCompleteTime());
             vo.setReceiverName(orderEntity.getReceiverName());
+            vo.setReceiverMobile(orderEntity.getReceiverMobile());
+            vo.setReceiverAddress(orderEntity.getReceiverAddress());
             vo.setRemark(orderEntity.getRemark());
             vo.setShippingNo(orderEntity.getShippingNo());
             vo.setShippingRemark(orderEntity.getShippingRemark());
@@ -382,6 +399,15 @@ public class OrderService {
             list.add(vo);
         }
         return list;
+    }
+
+    private static String buildFullAddress(UserAddressEntity address) {
+        StringBuilder sb = new StringBuilder();
+        if (address.getProvince() != null) sb.append(address.getProvince());
+        if (address.getCity() != null) sb.append(address.getCity());
+        if (address.getDistrict() != null) sb.append(address.getDistrict());
+        if (address.getDetailAddress() != null) sb.append(address.getDetailAddress());
+        return sb.toString();
     }
 
     private String generateOrderNo(Long userId) {

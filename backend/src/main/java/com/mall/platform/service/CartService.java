@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mall.platform.common.BizException;
 import com.mall.platform.common.ResultCode;
 import com.mall.platform.dto.CartAddDTO;
+import com.mall.platform.dto.CartDeleteDTO;
+import com.mall.platform.dto.CartUpdateDTO;
 import com.mall.platform.entity.CartEntity;
 import com.mall.platform.entity.ProductEntity;
 import com.mall.platform.enums.ProductSaleStatus;
@@ -64,6 +66,40 @@ public class CartService {
     }
 
     /**
+     * 修改购物车项数量：仅允许本人行；校验商品仍有效且库存充足。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateQuantity(CartUpdateDTO cartUpdateDTO) {
+        CartEntity cartEntity = cartRepository.selectById(cartUpdateDTO.getCartId());
+        if (cartEntity == null || !cartEntity.getUserId().equals(cartUpdateDTO.getUserId())) {
+            throw new BizException(ResultCode.NOT_FOUND.getCode(), "购物车项不存在");
+        }
+        ProductEntity productEntity = productRepository.selectById(cartEntity.getProductId());
+        if (productEntity == null || Boolean.TRUE.equals(productEntity.getDeleted())
+                || !ProductSaleStatus.ON_SHELF.getCode().equals(productEntity.getSaleStatus())) {
+            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "商品已失效，请先移除");
+        }
+        Integer stock = productEntity.getStock() == null ? 0 : productEntity.getStock();
+        if (stock < cartUpdateDTO.getQuantity()) {
+            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "商品库存不足：" + productEntity.getProductName());
+        }
+        cartEntity.setQuantity(cartUpdateDTO.getQuantity());
+        cartRepository.updateById(cartEntity);
+    }
+
+    /**
+     * 删除购物车项：仅允许本人行。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteItem(CartDeleteDTO cartDeleteDTO) {
+        CartEntity cartEntity = cartRepository.selectById(cartDeleteDTO.getCartId());
+        if (cartEntity == null || !cartEntity.getUserId().equals(cartDeleteDTO.getUserId())) {
+            throw new BizException(ResultCode.NOT_FOUND.getCode(), "购物车项不存在");
+        }
+        cartRepository.deleteById(cartEntity.getId());
+    }
+
+    /**
      * 查询用户购物车。
      */
     public List<CartItemVO> listCart(Long userId) {
@@ -96,6 +132,10 @@ public class CartService {
                 cartItemVO.setProductImage(productEntity.getMainImage());
                 cartItemVO.setProductPrice(productEntity.getPrice());
             }
+            boolean invalid = productEntity == null
+                    || Boolean.TRUE.equals(productEntity.getDeleted())
+                    || !ProductSaleStatus.ON_SHELF.getCode().equals(productEntity.getSaleStatus());
+            cartItemVO.setInvalid(invalid);
             cartItemVO.setQuantity(cartEntity.getQuantity());
             cartItemVO.setShopId(cartEntity.getShopId());
             if (shopEntity != null) {

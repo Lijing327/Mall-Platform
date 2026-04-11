@@ -31,7 +31,7 @@
           <td>{{ item.merchantId }}</td>
           <td>{{ item.merchantName }}</td>
           <td>{{ item.contactName }} / {{ item.contactMobile }}</td>
-          <td>{{ item.applyStatus }}</td>
+          <td>{{ applyStatusZh(item.applyStatus) }}</td>
           <td>{{ item.auditRemark || "-" }}</td>
           <td class="ops">
             <button class="btn" :disabled="item.applyStatus !== 'PENDING'" @click="approve(item)">通过</button>
@@ -46,6 +46,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { auditMerchant, fetchAdminMerchants } from "../../api/admin";
+import { applyStatusZh } from "../../utils/display-labels";
 
 const list = ref([]);
 const applyStatus = ref("");

@@ -8,11 +8,11 @@
         <div class="order-head">
           <span class="muted">订单号</span> {{ order.orderNo }}
           <span class="sep">|</span>
-          <span>{{ order.orderStatus }}</span>
+          <span>{{ orderStatusZh(order.orderStatus) }}</span>
           <span class="sep">|</span>
           <span>实付 {{ order.payAmount }}</span>
           <span v-if="order.payType" class="sep">|</span>
-          <span v-if="order.payType">{{ order.payType }}</span>
+          <span v-if="order.payType">{{ payTypeZh(order.payType) }}</span>
           <span class="sep">|</span>
           <span class="muted">支付</span> {{ order.payTime || "-" }}
           <span v-if="order.completeTime" class="sep">|</span>
@@ -24,7 +24,15 @@
             </button>
           </span>
         </div>
-        <div v-if="order.remark || order.shippingNo || order.shipTime" class="order-extra">
+        <div v-if="order.receiverName || order.remark || order.shippingNo || order.shipTime" class="order-extra">
+          <p v-if="order.receiverName">
+            <span class="muted">收货人</span>{{ order.receiverName }}
+            <span v-if="order.receiverMobile" class="muted-sep">·</span>
+            <span v-if="order.receiverMobile">{{ order.receiverMobile }}</span>
+          </p>
+          <p v-if="order.receiverAddress">
+            <span class="muted">收货地址</span>{{ order.receiverAddress }}
+          </p>
           <p v-if="order.remark"><span class="muted">备注</span>{{ order.remark }}</p>
           <template v-if="order.shippingNo || order.shipTime">
             <p><span class="muted">快递单号</span>{{ order.shippingNo || "-" }}</p>
@@ -58,6 +66,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from "vue";
 import { confirmReceiveOrder, fetchMyOrders } from "../api/order";
+import { orderStatusZh, payTypeZh } from "../utils/display-labels";
 import { getUserId } from "../utils/user-context";
 
 const userId = ref(getUserId());
@@ -154,6 +163,10 @@ onUnmounted(() => {
 .order-extra .muted {
   color: #888;
   margin-right: 6px;
+}
+.order-extra .muted-sep {
+  color: #ccc;
+  margin: 0 6px;
 }
 .order-extra p {
   margin: 4px 0;

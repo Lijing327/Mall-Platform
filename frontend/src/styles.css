@@ -44,3 +44,18 @@ a {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* 数据表：th 默认居中、td 默认左对齐会导致表头与内容「列对不齐」；统一对齐并固定列宽算法 */
+table.table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.table th,
+table.table td {
+  text-align: left;
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}

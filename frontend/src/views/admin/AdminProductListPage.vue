@@ -33,7 +33,7 @@
           <td>{{ item.productName }}</td>
           <td>{{ item.price }}</td>
           <td>{{ item.stock }}</td>
-          <td>{{ item.saleStatus }}</td>
+          <td>{{ saleStatusZh(item.saleStatus) }}</td>
           <td>
             <button class="btn secondary" :disabled="item.saleStatus === 'OFF_SHELF'" @click="offShelf(item)">
               下架
@@ -48,6 +48,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { adminOffShelfProduct, fetchAdminProducts } from "../../api/admin";
+import { saleStatusZh } from "../../utils/display-labels";
 
 const list = ref([]);
 const keyword = ref("");

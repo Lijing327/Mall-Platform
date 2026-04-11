@@ -1,7 +1,7 @@
 <template>
   <div class="card login-card">
     <h3>登录</h3>
-    <p class="hint">MVP：使用配置中的用户 ID + 登录口令换取令牌；管理员 ID 见后端 <code>mall.auth.admin-user-ids</code>。</p>
+    <p class="hint">MVP：输入用户 ID 与统一口令登录；是否为管理员由后端「管理员用户 ID」配置决定。</p>
     <div class="form-row">
       <label>用户 ID</label>
       <input v-model.number="userId" type="number" min="1" />

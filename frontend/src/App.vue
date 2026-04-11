@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">平台商城 MVP</div>
+      <div class="logo">自营商城 MVP 1.0</div>
 
       <div class="menu-group">
         <div class="group-title">用户端</div>
@@ -9,18 +9,11 @@
         <RouterLink class="menu-item" to="/cart">购物车</RouterLink>
         <RouterLink class="menu-item" to="/checkout">提交订单</RouterLink>
         <RouterLink class="menu-item" to="/orders">我的订单</RouterLink>
+        <RouterLink class="menu-item" to="/addresses">我的地址</RouterLink>
       </div>
 
       <div class="menu-group">
-        <div class="group-title">商家端</div>
-        <RouterLink class="menu-item" to="/merchant/apply">商家入驻</RouterLink>
-        <RouterLink class="menu-item" to="/merchant/products">商品管理</RouterLink>
-        <RouterLink class="menu-item" to="/merchant/orders">店铺订单</RouterLink>
-      </div>
-
-      <div class="menu-group">
-        <div class="group-title">管理端</div>
-        <RouterLink class="menu-item" to="/admin/merchants">商家审核</RouterLink>
+        <div class="group-title">后台管理</div>
         <RouterLink class="menu-item" to="/admin/orders">订单列表</RouterLink>
         <RouterLink class="menu-item" to="/admin/products">商品列表</RouterLink>
       </div>
@@ -31,8 +24,8 @@
         <div class="title">{{ pageTitle }}</div>
         <div class="top-actions">
           <div class="meta">
-            <span v-if="tokenPresent">userId={{ displayUserId }} / role={{ displayRole }}</span>
-            <span v-if="tokenPresent && displayMerchantId"> / merchantId={{ displayMerchantId }}</span>
+            <span v-if="tokenPresent">用户ID={{ displayUserId }} / 角色={{ userRoleZh(displayRole) }}</span>
+            <span v-if="tokenPresent && displayMerchantId"> / 商家ID={{ displayMerchantId }}</span>
             <span v-else-if="!tokenPresent">未登录</span>
           </div>
           <RouterLink v-if="!tokenPresent" class="btn-link" to="/login">登录</RouterLink>
@@ -49,6 +42,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
+import { userRoleZh } from "./utils/display-labels";
 import { getMerchantId, getRole, getToken, getUserId, logout } from "./utils/user-context";
 
 const route = useRoute();
@@ -77,13 +71,14 @@ const titleMap = {
   "/cart": "购物车",
   "/checkout": "提交订单",
   "/orders": "我的订单",
+  "/addresses": "我的地址",
   "/login": "登录",
   "/merchant/apply": "商家入驻申请",
   "/merchant/products": "商家商品管理",
   "/merchant/orders": "店铺订单",
   "/admin/merchants": "商家审核",
-  "/admin/orders": "全平台订单",
-  "/admin/products": "全平台商品"
+  "/admin/orders": "订单列表",
+  "/admin/products": "商品列表"
 };
 
 const pageTitle = computed(() => {
@@ -96,7 +91,7 @@ const pageTitle = computed(() => {
   if (route.path.startsWith("/products/")) {
     return "商品详情";
   }
-  return titleMap[route.path] || "平台商城";
+  return titleMap[route.path] || "自营商城";
 });
 
 onMounted(() => {

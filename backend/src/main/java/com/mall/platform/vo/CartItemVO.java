@@ -15,6 +15,18 @@ public class CartItemVO {
     private Long shopId;
     private String shopName;
     private String shopType;
+    /**
+     * 商品是否已失效（已删除或已下架）。前端可置灰禁止结算。
+     */
+    private Boolean invalid;
+
+    public Boolean getInvalid() {
+        return invalid;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
+    }
 
     public Long getCartId() {
         return cartId;

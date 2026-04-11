@@ -30,6 +30,7 @@ IF OBJECT_ID(N'dbo.orders', N'U') IS NOT NULL DROP TABLE dbo.orders;
 IF OBJECT_ID(N'dbo.product', N'U') IS NOT NULL DROP TABLE dbo.product;
 IF OBJECT_ID(N'dbo.shop', N'U') IS NOT NULL DROP TABLE dbo.shop;
 IF OBJECT_ID(N'dbo.merchant', N'U') IS NOT NULL DROP TABLE dbo.merchant;
+IF OBJECT_ID(N'dbo.user_address', N'U') IS NOT NULL DROP TABLE dbo.user_address;
 GO
 
 /* ---------- merchant ---------- */
@@ -175,6 +176,24 @@ CREATE TABLE dbo.cart (
 CREATE INDEX IX_cart_user_id ON dbo.cart (user_id);
 GO
 
+/* ---------- user_address（一期地址簿：CRUD + 默认地址；下单时快照到订单） ---------- */
+CREATE TABLE dbo.user_address (
+    id              BIGINT        NOT NULL IDENTITY(1,1) CONSTRAINT PK_user_address PRIMARY KEY,
+    user_id         BIGINT        NOT NULL,
+    receiver_name   NVARCHAR(64)  NOT NULL,
+    receiver_mobile NVARCHAR(32)  NOT NULL,
+    province        NVARCHAR(64)  NOT NULL,
+    city            NVARCHAR(64)  NOT NULL,
+    district        NVARCHAR(64)  NOT NULL,
+    detail_address  NVARCHAR(256) NOT NULL,
+    is_default      BIT           NOT NULL CONSTRAINT DF_user_address_default DEFAULT (0),
+    is_deleted      BIT           NOT NULL CONSTRAINT DF_user_address_deleted DEFAULT (0),
+    create_time     DATETIME2(0)  NOT NULL CONSTRAINT DF_user_address_create DEFAULT (SYSUTCDATETIME()),
+    update_time     DATETIME2(0)  NOT NULL CONSTRAINT DF_user_address_update DEFAULT (SYSUTCDATETIME())
+);
+CREATE INDEX IX_user_address_user_id ON dbo.user_address (user_id);
+GO
+
 /* ================================================================================
    种子数据（逻辑用户说明见同目录 README.md）
    userId=1   管理员（须与 mall.auth.admin-user-ids 配置一致）
@@ -197,12 +216,14 @@ VALUES
 (2, N'S_MERCH_2001_001', N'演示商家有限公司店铺', N'MERCHANT', 1, 2001, N'ENABLED', @t, @t);
 SET IDENTITY_INSERT dbo.shop OFF;
 
+/* 说明：一期定位为"自营商城 MVP 1.0"，种子示例统一挂在自营店（shop_id=1）下。
+   merchant/shop 的商家店结构继续保留，作为后续平台化预留。 */
 SET IDENTITY_INSERT dbo.product ON;
 INSERT INTO dbo.product (id, shop_id, product_sn, product_name, product_subtitle, main_image, detail, price, stock, sale_status, audit_status, is_deleted, create_time, update_time)
 VALUES
-(101, 1, N'P1SELF20260115001', N'自营｜无线鼠标 M1', N'自营店铺示例商品', N'https://example.com/img/mouse.jpg', N'<p>自营商品详情</p>', 59.90, 1000, N'ON_SHELF', N'PASS', 0, @t, @t),
-(102, 2, N'P2MCH20260115001', N'商家｜机械键盘 K8', N'商家店铺示例商品', N'https://example.com/img/kb.jpg', N'<p>商家商品详情</p>', 299.00, 200, N'ON_SHELF', N'PASS', 0, @t, @t),
-(103, 2, N'P2MCH20260115002', N'商家｜USB-C 数据线（已下架样例）', N'用于管理端/筛选演示', NULL, NULL, 19.90, 50, N'OFF_SHELF', N'PASS', 0, @t, @t);
+(101, 1, N'P1SELF20260115001', N'自营｜无线鼠标 M1', N'自营旗舰店示例商品', N'https://example.com/img/mouse.jpg', N'<p>自营商品详情</p>', 59.90, 1000, N'ON_SHELF', N'PASS', 0, @t, @t),
+(102, 1, N'P1SELF20260115002', N'自营｜机械键盘 K8', N'自营旗舰店示例商品', N'https://example.com/img/kb.jpg', N'<p>自营商品详情</p>', 299.00, 200, N'ON_SHELF', N'PASS', 0, @t, @t),
+(103, 1, N'P1SELF20260115003', N'自营｜USB-C 数据线（已下架样例）', N'用于后台管理/筛选演示', NULL, NULL, 19.90, 50, N'OFF_SHELF', N'PASS', 0, @t, @t);
 SET IDENTITY_INSERT dbo.product OFF;
 
 SET IDENTITY_INSERT dbo.orders ON;
@@ -214,7 +235,7 @@ SET IDENTITY_INSERT dbo.orders OFF;
 SET IDENTITY_INSERT dbo.order_item ON;
 INSERT INTO dbo.order_item (id, order_id, shop_id, product_id, product_name, product_image, product_price, quantity, item_amount, item_status, create_time, update_time)
 VALUES
-(501, 500, 2, 102, N'商家｜机械键盘 K8', N'https://example.com/img/kb.jpg', 299.00, 1, 299.00, N'NORMAL', @t, @t);
+(501, 500, 1, 102, N'自营｜机械键盘 K8', N'https://example.com/img/kb.jpg', 299.00, 1, 299.00, N'NORMAL', @t, @t);
 SET IDENTITY_INSERT dbo.order_item OFF;
 
 SET IDENTITY_INSERT dbo.cart ON;

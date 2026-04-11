@@ -25,7 +25,7 @@
           <td>{{ item.productName }}</td>
           <td>{{ item.price }}</td>
           <td>{{ item.stock }}</td>
-          <td>{{ item.saleStatus }}</td>
+          <td>{{ saleStatusZh(item.saleStatus) }}</td>
           <td class="ops">
             <RouterLink :to="`/merchant/products/${item.id}/edit`">编辑</RouterLink>
             <a href="javascript:void(0)" @click="toggleShelf(item)">
@@ -48,6 +48,7 @@ import {
   offShelfMerchantProduct,
   onShelfMerchantProduct
 } from "../../api/merchant";
+import { saleStatusZh } from "../../utils/display-labels";
 import { getMerchantId } from "../../utils/user-context";
 
 const merchantId = getMerchantId();

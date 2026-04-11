@@ -35,9 +35,9 @@
           <td>{{ item.orderId }}</td>
           <td>{{ item.orderNo }}</td>
           <td>{{ item.userId }}</td>
-          <td>{{ item.orderStatus }}</td>
+          <td>{{ orderStatusZh(item.orderStatus) }}</td>
           <td>{{ item.payAmount }}</td>
-          <td>{{ item.payType || "-" }}</td>
+          <td>{{ payTypeZh(item.payType) }}</td>
           <td>{{ item.payTime || "-" }}</td>
           <td>{{ item.shippingNo || "-" }}</td>
           <td>{{ item.shipTime || "-" }}</td>
@@ -50,6 +50,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { fetchAdminOrders } from "../../api/admin";
+import { orderStatusZh, payTypeZh } from "../../utils/display-labels";
 
 const list = ref([]);
 const orderStatus = ref("");

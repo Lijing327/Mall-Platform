@@ -4,6 +4,7 @@ import ProductDetailPage from "../views/ProductDetailPage.vue";
 import CartPage from "../views/CartPage.vue";
 import CheckoutPage from "../views/CheckoutPage.vue";
 import MyOrdersPage from "../views/MyOrdersPage.vue";
+import MyAddressPage from "../views/MyAddressPage.vue";
 import LoginPage from "../views/LoginPage.vue";
 import MerchantApplyPage from "../views/merchant/MerchantApplyPage.vue";
 import MerchantProductManagePage from "../views/merchant/MerchantProductManagePage.vue";
@@ -22,6 +23,7 @@ const routes = [
   { path: "/cart", component: CartPage, meta: { requiresAuth: true } },
   { path: "/checkout", component: CheckoutPage, meta: { requiresAuth: true } },
   { path: "/orders", component: MyOrdersPage, meta: { requiresAuth: true } },
+  { path: "/addresses", component: MyAddressPage, meta: { requiresAuth: true } },
   { path: "/merchant/apply", component: MerchantApplyPage, meta: { requiresAuth: true } },
   { path: "/merchant/products", component: MerchantProductManagePage, meta: { requiresAuth: true } },
   { path: "/merchant/products/new", component: MerchantProductEditPage, meta: { requiresAuth: true } },

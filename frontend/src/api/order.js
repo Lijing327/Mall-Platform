@@ -1,5 +1,6 @@
 import http from "./http";
 
+// data: { addressId, remark? }
 export function createOrder(data) {
   const { userId: _u, ...rest } = data || {};
   return http.post("/api/orders/create", rest);

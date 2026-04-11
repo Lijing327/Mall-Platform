@@ -19,6 +19,8 @@ public class MyOrderListVO {
     private LocalDateTime createTime;
     private LocalDateTime completeTime;
     private String receiverName;
+    private String receiverMobile;
+    private String receiverAddress;
     private String remark;
     private String shippingNo;
     private String shippingRemark;
@@ -108,6 +110,22 @@ public class MyOrderListVO {
 
     public void setReceiverName(String receiverName) {
         this.receiverName = receiverName;
+    }
+
+    public String getReceiverMobile() {
+        return receiverMobile;
+    }
+
+    public void setReceiverMobile(String receiverMobile) {
+        this.receiverMobile = receiverMobile;
+    }
+
+    public String getReceiverAddress() {
+        return receiverAddress;
+    }
+
+    public void setReceiverAddress(String receiverAddress) {
+        this.receiverAddress = receiverAddress;
     }
 
     public String getRemark() {
