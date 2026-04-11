@@ -36,6 +36,17 @@
 
 代码中请通过 `FeatureFlags` Bean 读取，勿散落硬编码。
 
+**前端路由（Vue Router，与后端路径独立）**：
+
+| 区域 | 说明 |
+|------|------|
+| 用户端 + 商家端 | `MallLayout`：`/`（重定向至 `/products`）、`/products`、`/products/:id`、`/cart`、`/checkout`、`/orders`、`/addresses`、`/merchant/*` |
+| 商城登录 | `EmptyLayout`：`/login` |
+| 管理端 | `AdminLayout`：`/admin/dashboard`（占位）、`/admin/products`、`/admin/orders`、`/admin/orders/:id`（占位）、`/admin/users`（占位）、`/admin/merchants` |
+| 后台登录 | `EmptyLayout`：`/admin/login` |
+
+未登录访问需管理员权限的 `/admin/**`（除 `/admin/login`）时，前端会重定向至 `/admin/login?redirect=`。
+
 ---
 
 ## 一、用户端

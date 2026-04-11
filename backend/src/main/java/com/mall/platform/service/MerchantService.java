@@ -12,6 +12,7 @@ import com.mall.platform.repository.MerchantRepository;
 import com.mall.platform.repository.ShopRepository;
 import com.mall.platform.vo.MerchantApplyVO;
 import com.mall.platform.vo.MerchantAuditVO;
+import com.mall.platform.vo.MerchantMeVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -29,6 +30,26 @@ public class MerchantService {
     public MerchantService(MerchantRepository merchantRepository, ShopRepository shopRepository) {
         this.merchantRepository = merchantRepository;
         this.shopRepository = shopRepository;
+    }
+
+    /**
+     * 当前登录用户是否已关联商家记录（含待审核/已通过/已驳回）。
+     */
+    public MerchantMeVO getMerchantByUserId(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        LambdaQueryWrapper<MerchantEntity> merchantQueryWrapper = new LambdaQueryWrapper<>();
+        merchantQueryWrapper.eq(MerchantEntity::getUserId, userId);
+        MerchantEntity merchantEntity = merchantRepository.selectOne(merchantQueryWrapper);
+        if (merchantEntity == null) {
+            return null;
+        }
+        MerchantMeVO merchantMeVO = new MerchantMeVO();
+        merchantMeVO.setMerchantId(merchantEntity.getId());
+        merchantMeVO.setMerchantName(merchantEntity.getMerchantName());
+        merchantMeVO.setApplyStatus(merchantEntity.getApplyStatus());
+        return merchantMeVO;
     }
 
     /**

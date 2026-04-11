@@ -1,13 +1,18 @@
 <template>
-  <div class="card">
-    <div class="head">
-      <h3>我的地址</h3>
-      <button type="button" class="btn primary" @click="openCreate">+ 新增地址</button>
-    </div>
+  <div class="page">
+    <header class="page-head">
+      <div class="head-row">
+        <div>
+          <h1 class="title">我的收货地址</h1>
+          <p class="subtitle">用于下单与配送，请保持信息准确</p>
+        </div>
+        <button type="button" class="btn primary" @click="openCreate">+ 新增地址</button>
+      </div>
+    </header>
 
     <div v-if="list.length === 0" class="empty">还没有收货地址，先添加一个吧～</div>
 
-    <div class="address-list">
+    <div v-else class="address-list">
       <div v-for="addr in list" :key="addr.id" class="addr-card" :class="{ 'is-default': addr.isDefault }">
         <div class="addr-main">
           <div class="addr-line1">
@@ -79,7 +84,7 @@ import {
   fetchAddressList,
   setDefaultAddress,
   updateAddress
-} from "../api/address";
+} from "../../api/address";
 
 const list = ref([]);
 const showForm = ref(false);
@@ -165,12 +170,34 @@ onMounted(loadData);
 </script>
 
 <style scoped>
-.head {
+.page {
+  width: 100%;
+}
+
+.page-head {
+  margin-bottom: 16px;
+}
+
+.head-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
 }
+
+.title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+}
+
 .empty {
   color: #888;
   padding: 12px 0;
@@ -181,12 +208,14 @@ onMounted(loadData);
   gap: 12px;
 }
 .addr-card {
+  background: #fff;
   border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 .addr-card.is-default {
   border-color: #1677ff;

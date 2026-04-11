@@ -1,7 +1,3 @@
-/**
- * 后端枚举/code → 中文展示（与 Java 枚举名一致）。
- */
-
 const ORDER_STATUS_ZH = {
   PENDING_PAYMENT: "待支付",
   PAID: "已支付",
@@ -24,37 +20,34 @@ const APPLY_STATUS_ZH = {
   REJECTED: "已拒绝"
 };
 
-/** @param {string|null|undefined} code */
-export function orderStatusZh(code) {
-  if (code == null || code === "") return "—";
-  return ORDER_STATUS_ZH[code] || String(code);
-}
-
-/** @param {string|null|undefined} code */
-export function payTypeZh(code) {
-  if (code == null || code === "") return "—";
-  return PAY_TYPE_ZH[code] || String(code);
-}
-
-/** @param {string|null|undefined} code */
-export function saleStatusZh(code) {
-  if (code == null || code === "") return "—";
-  return SALE_STATUS_ZH[code] || String(code);
-}
-
-/** @param {string|null|undefined} code */
-export function applyStatusZh(code) {
-  if (code == null || code === "") return "—";
-  return APPLY_STATUS_ZH[code] || String(code);
-}
-
 const USER_ROLE_ZH = {
   ADMIN: "管理员",
   USER: "普通用户"
 };
 
-/** @param {string|null|undefined} role */
+function displayValue(code, mapper) {
+  if (code == null || code === "") {
+    return "—";
+  }
+  return mapper[code] || String(code);
+}
+
+export function orderStatusZh(code) {
+  return displayValue(code, ORDER_STATUS_ZH);
+}
+
+export function payTypeZh(code) {
+  return displayValue(code, PAY_TYPE_ZH);
+}
+
+export function saleStatusZh(code) {
+  return displayValue(code, SALE_STATUS_ZH);
+}
+
+export function applyStatusZh(code) {
+  return displayValue(code, APPLY_STATUS_ZH);
+}
+
 export function userRoleZh(role) {
-  if (role == null || role === "") return "—";
-  return USER_ROLE_ZH[role] || String(role);
+  return displayValue(role, USER_ROLE_ZH);
 }

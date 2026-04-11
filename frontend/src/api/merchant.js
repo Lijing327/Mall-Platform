@@ -1,5 +1,10 @@
 import http from "./http";
 
+/** 当前登录用户是否已申请/入驻商家（需登录） */
+export function fetchMerchantMe() {
+  return http.get("/api/merchant/me");
+}
+
 export function merchantApply(data) {
   return http.post("/api/merchant/apply", stripUserBody(data));
 }

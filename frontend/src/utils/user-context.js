@@ -56,6 +56,12 @@ export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem(MERCHANT_ID_KEY);
+}
+
+/** 入驻成功后通知顶栏刷新商家状态 */
+export function notifyMerchantProfileChanged() {
+  window.dispatchEvent(new Event("mall-merchant-profile-changed"));
 }
 
 export function getMerchantId() {

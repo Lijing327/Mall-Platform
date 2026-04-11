@@ -13,6 +13,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { merchantApply } from "../../api/merchant";
+import { notifyMerchantProfileChanged } from "../../utils/user-context";
 import { applyStatusZh } from "../../utils/display-labels";
 const form = reactive({
   merchantName: "",
@@ -23,8 +24,13 @@ const form = reactive({
 const result = ref("");
 
 async function submitApply() {
-  const res = await merchantApply(form);
-  result.value = `申请已提交，商家ID=${res.data.merchantId}，状态=${applyStatusZh(res.data.applyStatus)}`;
+  try {
+    const res = await merchantApply(form);
+    result.value = `申请已提交，商家ID=${res.data.merchantId}，状态=${applyStatusZh(res.data.applyStatus)}`;
+    notifyMerchantProfileChanged();
+  } catch (e) {
+    result.value = e?.message || "提交失败";
+  }
 }
 </script>
 

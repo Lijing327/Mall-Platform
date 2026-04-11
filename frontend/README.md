@@ -2,7 +2,7 @@
 
 ## 1. 说明
 
-该模块为 Vue3 Web 前端，已接入后端真实接口，当前采用统一后台布局（左侧菜单 + 顶栏）承载三端页面。
+该模块为 Vue3 Web 前端，已接入后端真实接口。页面按 **`MallLayout`（商城 + 商家）**、**`AdminLayout`（管理后台）**、**`EmptyLayout`（登录页）** 三套壳拆分，路由见下文。
 目标是打通平台商城 MVP 主流程：
 
 - 商品列表
@@ -41,19 +41,33 @@ npm run dev
 
 ## 4. 页面路由清单
 
+**商城壳（`layouts/MallLayout.vue`）**
+
 - `/products` 商品列表页（分页 + 关键字搜索）
 - `/products/:id` 商品详情页（可加入购物车）
 - `/cart` 购物车页
 - `/checkout` 提交订单页（创建订单 + 模拟支付）
 - `/orders` 我的订单页
+- `/addresses` 我的地址页
 - `/merchant/apply` 商家入驻申请页
 - `/merchant/products` 商家商品管理页
 - `/merchant/products/new` 商家商品新增页
 - `/merchant/products/:id/edit` 商家商品编辑页
 - `/merchant/orders` 商家店铺订单页
-- `/admin/merchants` 管理员商家审核页
-- `/admin/orders` 管理员订单列表页
-- `/admin/products` 管理员商品列表页
+
+**无侧栏（`layouts/EmptyLayout.vue`）**
+
+- `/login` 商城登录页
+- `/admin/login` 管理后台登录页（与商城共用 `POST /api/auth/login`，默认进入 `/admin/dashboard`）
+
+**管理后台壳（`layouts/AdminLayout.vue`）**
+
+- `/admin/dashboard` 仪表盘（占位）
+- `/admin/products` 全平台商品列表
+- `/admin/orders` 全平台订单列表
+- `/admin/orders/:id` 订单详情（占位，无单独详情接口时仅展示 ID）
+- `/admin/users` 用户管理（占位）
+- `/admin/merchants` 商家审核
 
 ## 5. 前后端接口映射（核心）
 
@@ -102,7 +116,7 @@ npm run dev
 
 **处理**：
 
-1. 打开报错文件（通常会定位到 `App.vue` 或某个页面）
+1. 打开报错文件（通常会定位到 `layouts/*.vue` 或某个 `views/**` 页面）
 2. 检查 `template` 区域是否有多余或缺失的闭合标签
 3. 保存后观察 Vite 是否自动恢复编译
 
@@ -120,4 +134,4 @@ npm run dev
 
 - 页面风格务实，优先流程可用，不做复杂动画
 - 页面数据返回统一走后端 `Result` 结构
-- 模块化组织：`api/`、`views/`、`router/`、`utils/`
+- 模块化组织：`api/`、`layouts/`、`views/`、`router/`、`utils/`
